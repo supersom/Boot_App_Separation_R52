@@ -1,34 +1,37 @@
 # Makefile for the bootloader
 
+# The target name is derived from the directory name
+TARGET_NAME = $(notdir $(CURDIR))
+ELF_OUT     = ../$(TARGET_NAME).elf
+
 # Toolchain
 CC = armclang
 LD = armlink
 
-# Common compiler and linker flags from your build command
-TARGET_FLAGS   = -target=arm-arm-none-eabi -mcpu=cortex-r52 -mfloat-abi=soft -mthumb
-CFLAGS         = -g -c $(TARGET_FLAGS)
-LDFLAGS        = --cpu=Cortex-R52 --map --library_type=microlib
+# Flags
+TARGET_FLAGS = -target=arm-arm-none-eabi -mcpu=cortex-r52 -mfloat-abi=soft -mthumb
+ASFLAGS      = -g -c $(TARGET_FLAGS)
+LDFLAGS      = --cpu=Cortex-R52 --map
 
-# Output file (in the parent directory)
-ELF_OUT = ../boot.elf
-
-# Source and Object files
-SRC_S = startup.S
-OBJS  = $(SRC_S:.S=.o)
+# Auto-discover sources and create object list
+# This project is pure assembly, so we only look for .S files
+SRCS_S = $(wildcard *.S)
+OBJS   = $(SRCS_S:.S=.o)
 
 # Default target
 .PHONY: all
 all: $(ELF_OUT)
 
 # Rule to link the final ELF
+# Note the custom linker flags for this bootloader
 $(ELF_OUT): $(OBJS)
-	$(LD) $(LDFLAGS) --scatter=boot.scat --entry=_start -o $@ $(OBJS)
+	$(LD) $(LDFLAGS) --scatter=$(TARGET_NAME).scat --entry=_start -o $@ $(OBJS)
 
-# Rule to compile assembly
+# Pattern rule to assemble .S source
 %.o: %.S
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) $(ASFLAGS) $< -o $@
 
 # Rule to clean build artifacts
 .PHONY: clean
 clean:
-	rm -f $(OBJS) $(ELF_OUT) ../boot.map
+	rm -f $(OBJS) $(ELF_OUT) ../$(TARGET_NAME).map

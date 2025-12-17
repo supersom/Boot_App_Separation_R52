@@ -4,7 +4,7 @@ LR_BOOT 0x00000000 0x00010000   ; 64 KB boot ROM
 {
     ER_BOOT   0x00000000 0x00010000
     {
-        startup.o (RESET, +First)
+        * (RESET, +First)
         .ANY (+RO)
     }
 
@@ -12,7 +12,7 @@ LR_BOOT 0x00000000 0x00010000   ; 64 KB boot ROM
     {
         * (BOOT_ARGS)
     }
-    
+
     RW_BOOT   0x30000000 0x00008000  ; 32KB RAM
     {
         .ANY (+RW,+ZI)
