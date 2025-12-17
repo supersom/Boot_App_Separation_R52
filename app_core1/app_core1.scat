@@ -1,0 +1,28 @@
+; app.scat – application image at 0x00020000
+
+LR_APP 0x00040000 0x00010000   ; 64 KB app region
+{
+    ER_APP   0x00040000 0x00010000
+    {
+        * (.app_vector_table, +First) ; Place vector table first
+        .ANY (+RO)
+    }
+
+    ;SHARED_RW   0x10000000 0x1000
+    ;{
+    ;    * (BOOT_ARGS)
+    ;}
+
+    RW_APP   0x30020000 0x00008000
+    {
+        .ANY (+RW,+ZI)
+    }
+
+    ARM_LIB_HEAP 0x20020000 EMPTY 0x00004000 ; 16KB Heap
+    {
+    }
+
+    ARM_LIB_STACK 0x20028000 EMPTY -0x00004000 ; 16KB Stack
+    {
+    }
+}
