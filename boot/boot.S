@@ -93,8 +93,6 @@ L_setup_stack:
     //b __main
 
 .L_secondary_core_start:
-    // B .L_secondary_core_start // Placeholder infinite loop for now
-
     // Identify if this is CPU1
     mrc p15, 0, r0, c0, c0, 5 // Read MPIDR into r0
     AND r0, r0, #0x3         // Mask to get CPU ID (bits [1:0])
@@ -169,7 +167,7 @@ L_setup_secondary_stack:
     // sub r2, r0, #0x1        // [core_id (r0) - 1] in r2
     // mul r2, r2, r1          // core_id * 8
     // add r0, r0, r2          // base + offset (0x4) + (core_id * 8)
-    // ldr r0, [r0]            // Read the Reset Handler address (the second 
+    ldr r0, [r0]            // Read the Reset Handler address (the second 
                             // word in the vector table)
    ////////////////////////////////////////////////////////////////////////
                             // The value read is the entry point (e.g., __main) of the application.
