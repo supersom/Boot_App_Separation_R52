@@ -22,6 +22,7 @@ DBG_BASE_CMD='armdbg --cdb-entry "Arm FVP::BaseR_R52x2::Bare Metal Debug::Bare M
 
 # --- SCRIPT LOGIC ---
 ACTION=${1:-all}
+SUBACTION=${2}
 
 # Function to build the FVP's --application flags dynamically
 build_app_flags() {
@@ -43,66 +44,76 @@ get_last_elf_name() {
 }
 
 # --- Main Logic ---
-if [ "$ACTION" = "run" ]; then
-    echo "### Building all targets before running... ###"
-    ./build.sh all
-    echo
+case "$ACTION" in
+    "run")
+        APP_FLAGS=$(build_app_flags)
+        LAST_ELF_NAME=$(get_last_elf_name)
+        FVP_COMMAND="$FVP_BASE_CMD $APP_FLAGS"
+        DBG_COMMAND="$DBG_BASE_CMD --image \"$LAST_ELF_NAME\""
 
-    APP_FLAGS=$(build_app_flags)
-    LAST_ELF_NAME=$(get_last_elf_name)
-    
-    FVP_COMMAND="$FVP_BASE_CMD $APP_FLAGS"
-    DBG_COMMAND="$DBG_BASE_CMD --image \"$LAST_ELF_NAME\""
+        case "$SUBACTION" in
+            "fvp")
+                echo "### Building all targets before running FVP... ###"
+                ./build.sh all
+                echo
+                echo "### Launching FVP in foreground... (Press Ctrl+C to exit) ###"
+                eval $FVP_COMMAND
+                ;;
+            "debug")
+                echo "### Launching debugger to connect to existing FVP... ###"
+                eval $DBG_COMMAND
+                ;;
+            *) # Default 'run' action: build, run FVP & debugger together
+                echo "### Building all targets before running... ###"
+                ./build.sh all
+                echo
 
-    echo "### Launching FVP and Debugger... ###"
-    FVP_LOG=$(mktemp /tmp/fvp_log.XXXXXX)
-    echo "FVP log file: $FVP_LOG"
+                echo "### Launching FVP and Debugger... ###"
+                FVP_LOG=$(mktemp /tmp/fvp_log.XXXXXX)
+                echo "FVP log file: $FVP_LOG"
 
-    # Set a trap to kill the entire FVP process group and the tail process on exit.
-    # The '--' is important to signify that we are killing a negative PGID, not a signal number.
-    # trap 'echo; echo "Shutting down background processes... FVP_PID: $FVP_PID and TAIL_PID: $TAIL_PID"; kill -- -$FVP_PID &> /dev/null; kill $TAIL_PID &> /dev/null; rm -f "$FVP_LOG"' EXIT
-    trap 'echo; echo "Shutting down background processes... FVP_PID: $FVP_PID and TAIL_PID: $TAIL_PID"; kill $FVP_PID &> /dev/null; kill $TAIL_PID &> /dev/null; rm -f "$FVP_LOG"' EXIT
+                # Set a trap to kill the entire FVP process group and the tail process on exit.
+                trap 'echo; echo "Shutting down background processes... FVP_PID: $FVP_PID and TAIL_PID: $TAIL_PID"; kill -- -$FVP_PID &> /dev/null; kill $TAIL_PID &> /dev/null; rm -f "$FVP_LOG"' EXIT
 
-    echo "Starting FVP in background..."
-    # Launch the FVP. The shell will assign it a new process group.
-    eval $FVP_COMMAND > "$FVP_LOG" 2>&1 &
-    FVP_PID=$! # Capture the PID, which is also the PGID for this job.
-    echo "FVP started with PID $FVP_PID"
+                echo "Starting FVP in background..."
+                eval $FVP_COMMAND > "$FVP_LOG" 2>&1 &
+                FVP_PID=$! # Capture the PID, which is also the PGID for this job.
+                echo "FVP started with PID $FVP_PID"
 
-    echo "Waiting for FVP's Iris server on port $IRIS_PORT..."
-    # Wait up to 10 seconds for the "listening to port" message from the FVP
-    if ! timeout 10s grep -q "listening to port $IRIS_PORT" <(tail -f "$FVP_LOG" 2>/dev/null); then
-        echo "ERROR: FVP failed to start or Iris server timed out."
-        echo "--- FVP Log ---"
-        cat "$FVP_LOG"
-        exit 1
-    fi
-    
-    # Start tailing the log file to show FVP printf output live
-    tail -f "$FVP_LOG" &
-    TAIL_PID=$! # Capture the PID of the tail process
-    echo "FVP Iris server is up. Log tailing started with PID $TAIL_PID."
+                echo "Waiting for FVP's Iris server on port $IRIS_PORT..."
+                if ! timeout 10s grep -q "listening to port $IRIS_PORT" <(tail -f "$FVP_LOG" 2>/dev/null); then
+                    echo "ERROR: FVP failed to start or Iris server timed out."
+                    echo "--- FVP Log ---"; cat "$FVP_LOG"; exit 1
+                fi
+                
+                tail -f "$FVP_LOG" &
+                TAIL_PID=$! # Capture the PID of the tail process
+                echo "FVP Iris server is up. Log tailing started with PID $TAIL_PID."
 
-    echo "Starting debugger..."
-    eval $DBG_COMMAND
-    
-    echo "Debugger session ended."
+                echo "Starting debugger..."
+                eval $DBG_COMMAND
+                echo "Debugger session ended."
+                ;;
+        esac
+        ;;
 
-elif [ "$ACTION" = "clean" ]; then
-    for proj in $PROJECTS; do
-        if [ -f "$proj/Makefile" ]; then
-            echo "--- Cleaning $proj ---"
-            (cd "$proj" && make clean)
-        fi
-    done
-    echo "--- Clean complete ---"
+    "clean")
+        for proj in $PROJECTS; do
+            if [ -f "$proj/Makefile" ]; then
+                echo "--- Cleaning $proj ---"
+                (cd "$proj" && make clean)
+            fi
+        done
+        echo "--- Clean complete ---"
+        ;;
 
-else # This handles 'all'
-    for proj in $PROJECTS; do
-        if [ -f "$proj/Makefile" ]; then
-            echo "--- Building $proj ---"
-            (cd "$proj" && make $ACTION)
-        fi
-    done
-    echo "--- Build complete ---"
-fi
+    "all" | *)
+        for proj in $PROJECTS; do
+            if [ -f "$proj/Makefile" ]; then
+                echo "--- Building $proj ---"
+                (cd "$proj" && make)
+            fi
+        done
+        echo "--- Build complete ---"
+        ;;
+esac
