@@ -14,9 +14,10 @@ set -e # Exit immediately if a command exits with a non-zero status.
 # The LAST project in this list is passed last to the FVP, setting the entry point.
 PROJECTS="app app_core1 boot"
 IRIS_PORT=7100
+NUM_CORES=2
 
 # The base FVP and debugger commands
-FVP_BASE_CMD="FVP_BaseR_Cortex-R52 -I -p --iris-port $IRIS_PORT"
+FVP_BASE_CMD="FVP_BaseR_Cortex-R52 -C cluster0.NUM_CORES=$NUM_CORES -I -p --iris-port $IRIS_PORT"
 DBG_BASE_CMD='armdbg --cdb-entry "Arm FVP::BaseR_R52x2::Bare Metal Debug::Bare Metal Debug::Cortex-R52x2 SMP" --cdb-entry-param "connect_existing_model=true"'
 
 
