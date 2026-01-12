@@ -8,17 +8,18 @@
 #   ./build.sh clean  - Cleans all build artifacts.
 
 set -e # Exit immediately if a command exits with a non-zero status.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # --- CONFIGURATION ---
 # List all project subdirectories.
 # The LAST project in this list is passed last to the FVP, setting the entry point.
-PROJECTS="app app_core1 boot"
+PROJECTS="app app_core1 app_core10 app_core11 boot"
 IRIS_PORT=7100
-NUM_CORES=2
+NUM_CORES=4
 
 # The base FVP and debugger commands
 FVP_BASE_CMD="FVP_BaseR_Cortex-R52 -C cluster0.NUM_CORES=$NUM_CORES -I -p --iris-port $IRIS_PORT"
-DBG_BASE_CMD='armdbg --cdb-entry "Arm FVP::BaseR_R52x2::Bare Metal Debug::Bare Metal Debug::Cortex-R52x2 SMP" --cdb-entry-param "connect_existing_model=true"'
+DBG_BASE_CMD='armdbg --cdb-entry "Arm FVP::BaseR_R52x4::Bare Metal Debug::Bare Metal Debug::Cortex-R52x4 SMP" --cdb-entry-param "connect_existing_model=true"'
 
 
 # --- SCRIPT LOGIC ---
@@ -29,7 +30,7 @@ SUBACTION=${2}
 build_app_flags() {
     local flags=""
     for proj in $PROJECTS; do
-        flags="$flags --application ${proj}.elf"
+        flags="$flags --application ${SCRIPT_DIR}/${proj}.elf"
     done
     echo "$flags"
 }
@@ -41,7 +42,7 @@ get_last_elf_name() {
     do
         last_proj="$proj"
     done
-    echo "${last_proj}.elf"
+    echo "${SCRIPT_DIR}/${last_proj}.elf"
 }
 
 # --- Main Logic ---

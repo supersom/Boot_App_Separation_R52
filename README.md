@@ -6,6 +6,8 @@ Bare‑metal Cortex‑R52 example that boots a small assembly loader and hands o
 - `boot/` – assembly bootloader linked at `0x00000000`; drops from EL2 to EL1, sets stack, and jumps into the app images.
 - `app/` – core0 payload linked at `0x00020000`; simple “alive” loop.
 - `app_core1/` – core1 payload linked at `0x00040000`; simple “alive” loop.
+- `app_core10/` – core10 payload (core id 2) linked at `0x00060000`; simple “alive” loop.
+- `app_core11/` – core11 payload (core id 3) linked at `0x00080000`; simple “alive” loop.
 - `shared/` – MPU setup and shared boot args definitions.
 - `build.sh` – orchestrates building, running the FVP, and attaching armdbg.
 
@@ -22,7 +24,7 @@ Bare‑metal Cortex‑R52 example that boots a small assembly loader and hands o
 Each subdir also has its own `Makefile` if you want to build individually.
 
 ## Run on FVP
-Default config runs two cores and Iris on port 7100 (see `NUM_CORES`/`IRIS_PORT` in `build.sh`):
+Default config runs four cores and Iris on port 7100 (see `NUM_CORES`/`IRIS_PORT` in `build.sh`):
 ```bash
 ./build.sh run          # build, start FVP in background, tail log, launch armdbg (if installed)
 ./build.sh run fvp      # build then run only the FVP in the foreground
@@ -34,4 +36,6 @@ The script passes all ELFs to the model; the last one (`boot.elf`) is the entry 
 - Boot ROM/scatter: `boot.scat`, entry `_start` at `0x0`, stack top `0x20008000`.
 - Core0 app scatter: `app.scat`, vectors at `0x00020000`, stack top `0x20018000`.
 - Core1 app scatter: `app_core1.scat`, vectors at `0x00040000`, stack top `0x20028000`.
+- Core10 app scatter: `app_core10.scat`, vectors at `0x00060000`, stack top `0x20038000`.
+- Core11 app scatter: `app_core11.scat`, vectors at `0x00080000`, stack top `0x20048000`.
 - Secondary cores share `Image$$ARM_LIB_STACK$$Base` and offset their SP by `core_id * 0x1000` in `boot.S`. But for this example, non-core1 secondary cores are held in WFI
