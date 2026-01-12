@@ -93,11 +93,11 @@ L_setup_stack:
     //b __main
 
 .L_secondary_core_start:
-    // Identify if this is CPU1
+    // Identify if this is a valid secondary core (CPU1/CPU2/CPU3)
     mrc p15, 0, r0, c0, c0, 5 // Read MPIDR into r0
     AND r0, r0, #0x3         // Mask to get CPU ID (bits [1:0])
-    CMP r0, #1               // Compare with 1 (CPU1)
-    BNE .L_secondary_hold_up // If not CPU1, stay here (infinite loop)
+    CMP r0, #4               // Compare with 4 (only cores 0-3 expected)
+    BHS .L_secondary_hold_up // If not 0-3, stay here (infinite loop)
 
     // The FVP starts in EL2/Hyp mode. We must switch to EL1/SVC mode
     // and set up a stack before branching to any C library code.
@@ -157,9 +157,6 @@ L_setup_secondary_stack:
    // The second entry in the vector table (at offset +4) is the address of the Reset Handler,
    // which in our case will be the C library's __main function for the app.
     
-   ldr r0, =0x00040000     // Load the application's base address into R0
-   add r0, r0, #4          // base + offset (0x4) - Reset handler is the
-                           // second word of the vector table
    ////////////////////////////////////////////////////////////////////////
    // Read the Reset Handler address (the second word in the vector table of core_id i.e. base + core_id * 0x8)
     // ldr r1, =0x8            // Offset multiplier (8 bytes of app vector table
@@ -167,13 +164,20 @@ L_setup_secondary_stack:
     // sub r2, r0, #0x1        // [core_id (r0) - 1] in r2
     // mul r2, r2, r1          // core_id * 8
     // add r0, r0, r2          // base + offset (0x4) + (core_id * 8)
-    ldr r0, [r0]            // Read the Reset Handler address (the second 
-                            // word in the vector table)
+    sub r0, r0, #1           // Index 0..2 for core1/core10/core11
+    ldr r1, =secondary_app_bases
+    ldr r0, [r1, r0, lsl #2] // Load base address for this core
+    ldr r0, [r0, #4]         // Read the Reset Handler address (second word)
    ////////////////////////////////////////////////////////////////////////
                             // The value read is the entry point (e.g., __main) of the application.
    bx r0                    // Branch and Exchange to the address in R0.
                             // 'bx' ensures the correct instruction set (ARM or Thumb) is used based on the LSB of R0.
 
 .L_secondary_hold_up:
-    // Infinite loop for non-CPU1 secondary cores
+    // Infinite loop for non-CPU1/2/3 secondary cores
     b .L_secondary_hold_up
+
+secondary_app_bases:
+    .word 0x00040000         // core1
+    .word 0x00060000         // core10 (core id 2)
+    .word 0x00080000         // core11 (core id 3)
