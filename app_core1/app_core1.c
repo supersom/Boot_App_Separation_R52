@@ -46,7 +46,7 @@ int main(void)
     while (1)
     {
         counter++;
-        printf("App (core 1) is alive: %u\n", counter);
+        printf("App (core 01) is alive: %u\n", counter);
         sleep_busy_wait(10000000);
     }
 }
