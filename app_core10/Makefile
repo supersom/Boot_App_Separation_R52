@@ -9,14 +9,21 @@ CC = armclang
 LD = armlink
 
 # Flags
-TARGET_FLAGS = -target=arm-arm-none-eabi -mcpu=cortex-r52 -mfloat-abi=soft -mthumb
-CFLAGS       = -g -c $(TARGET_FLAGS)
+CPU = cortex-r52
+CODE_TYPE = thumb
+TARGET_ARCH = --target=arm-arm-none-eabi -mcpu=$(CPU) -mfpu=neon-fp-armv8 -mfloat-abi=hard -m$(CODE_TYPE) # Used for .c
+TARGET_MACH = $(TARGET_ARCH) # Used for .S
+CFLAGS       = -g -c $(TARGET_ARCH) -I../shared
+ASFLAGS      = -g -c $(TARGET_MACH) -I../shared
 LDFLAGS      = --cpu=Cortex-R52 --map --library_type=microlib
 
 # Auto-discover sources and create object list
 SRCS_C = $(wildcard *.c)
 SRCS_S = $(wildcard *.S)
-OBJS   = $(SRCS_C:.c=.o) $(SRCS_S:.S=.o)
+SHARED_DIR = ../shared
+SHARED_SRCS_S = $(wildcard $(SHARED_DIR)/*.S)
+SHARED_OBJS = $(patsubst $(SHARED_DIR)/%.S, shared_%.o, $(SHARED_SRCS_S))
+OBJS   = $(SRCS_C:.c=.o) $(SRCS_S:.S=.o) $(SHARED_OBJS)
 
 # Default target
 .PHONY: all
@@ -32,7 +39,10 @@ $(ELF_OUT): $(OBJS)
 
 # Pattern rule to assemble .S source
 %.o: %.S
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) $(ASFLAGS) $< -o $@
+
+shared_%.o: $(SHARED_DIR)/%.S
+	$(CC) $(ASFLAGS) $< -o $@
 
 # Rule to clean build artifacts
 .PHONY: clean
