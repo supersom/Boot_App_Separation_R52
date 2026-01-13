@@ -6,7 +6,7 @@
 
 // This is the application's entry point.
 // void app_entry(void);
-extern void __main(void);
+extern void app_bootloader(void);
 
 // Define the stack top. This should align with the scatter file.
 // RW_APP starts at 0x30010000 and is 0x8000 bytes long.
@@ -17,7 +17,7 @@ extern void __main(void);
 __attribute__ ((section(".app_vector_table"), used))
 const volatile uint32_t app_vector_table[] = {
     STACK_TOP,
-    (uint32_t) __main
+    (uint32_t) app_bootloader
 };
 
 // __attribute__ ((section("BOOT_ARGS"), used))
