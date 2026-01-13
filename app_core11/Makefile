@@ -16,7 +16,7 @@ TARGET_ARCH = --target=arm-arm-none-eabi -mcpu=$(CPU) -mfpu=neon-fp-armv8 -mfloa
 TARGET_MACH = $(TARGET_ARCH) # Used for .S
 CFLAGS       = -g -c $(TARGET_ARCH) -I../shared
 ASFLAGS      = -g -c $(TARGET_MACH) -I../shared
-LDFLAGS      = --cpu=Cortex-R52 --map --list=$(MAP_OUT) --library_type=microlib
+LDFLAGS      = --cpu=Cortex-R52 --map --symbols --list=$(MAP_OUT) --library_type=microlib
 
 # Auto-discover sources and create object list
 SRCS_C = $(wildcard *.c)
