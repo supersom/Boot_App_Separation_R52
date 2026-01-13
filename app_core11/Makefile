@@ -24,7 +24,7 @@ all: $(ELF_OUT)
 
 # Rule to link the final ELF
 $(ELF_OUT): $(OBJS)
-	$(LD) $(LDFLAGS) --scatter=$(TARGET_NAME).scat --entry=__main -o $@ $(OBJS)
+	$(LD) $(LDFLAGS) --scatter=$(TARGET_NAME).scat --entry=app_bootloader -o $@ $(OBJS)
 
 # Pattern rule to compile C source
 %.o: %.c
