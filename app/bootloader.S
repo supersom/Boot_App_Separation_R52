@@ -47,5 +47,10 @@ L_setup_stack:
     // Set up the stack pointer for this mode before calling any C code.
     ldr sp, =Image$$ARM_LIB_STACK$$Base
 
+    // Primary core initializes GIC Distributor and core interface.
+    // bl Primary_GIC_Setup
+    bl init_GICD
+    bl Corewise_GIC_Setup
+
     // Jump to the C runtime entry point for this app.
     b __main

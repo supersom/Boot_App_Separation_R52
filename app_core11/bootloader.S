@@ -47,5 +47,11 @@ L_setup_stack:
     // Set up the stack pointer for this mode before calling any C code.
     ldr sp, =Image$$ARM_LIB_STACK$$Base
 
+    // Wait for primary core to initialize GICD before per-core setup.
+    bl awaitGICDInit
+
+    // Secondary core initializes its GIC Redistributor and core interface.
+    bl Corewise_GIC_Setup
+
     // Jump to the C runtime entry point for this app.
     b __main
