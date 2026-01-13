@@ -25,4 +25,15 @@ LR_APP 0x00020000 0x00010000   ; 64 KB app region
     ARM_LIB_STACK 0x20018000 EMPTY -0x00004000 ; 16KB Stack
     {
     }
+
+    ; TCM regions (EMPTY so linker defines symbols)
+    ATCM 0x01000000 EMPTY 0x00020000
+    {
+    }
+    BTCM 0x02000000 EMPTY 0x00020000
+    {
+    }
+    CTCM 0x03000000 EMPTY 0x00020000
+    {
+    }
 }
