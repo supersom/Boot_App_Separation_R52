@@ -6,6 +6,10 @@ set -euo pipefail
 LOG=${1:-}
 TIMEOUT=${2:-20}
 
+if [[ -z "$LOG" ]]; then
+  LOG=$(ls -t /tmp/fvp_log.* 2>/dev/null | head -n 1 || true)
+fi
+
 if [[ -z "$LOG" || ! -f "$LOG" ]]; then
   echo "Usage: $0 /path/to/fvp_log [timeout_seconds]"
   exit 1
