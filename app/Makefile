@@ -23,8 +23,10 @@ SRCS_C = $(wildcard *.c)
 SRCS_S = $(wildcard *.S)
 SHARED_DIR = ../shared
 SHARED_SRCS_S = $(wildcard $(SHARED_DIR)/*.S)
+SHARED_SRCS_C = $(filter-out $(SHARED_DIR)/GIC.c,$(wildcard $(SHARED_DIR)/*.c))
 SHARED_OBJS = $(patsubst $(SHARED_DIR)/%.S, shared_%.o, $(SHARED_SRCS_S))
-OBJS   = $(SRCS_C:.c=.o) $(SRCS_S:.S=.o) $(SHARED_OBJS)
+SHARED_OBJS_C = $(patsubst $(SHARED_DIR)/%.c, shared_%.o, $(SHARED_SRCS_C))
+OBJS   = $(SRCS_C:.c=.o) $(SRCS_S:.S=.o) $(SHARED_OBJS) $(SHARED_OBJS_C)
 
 # Default target
 .PHONY: all
@@ -44,6 +46,9 @@ $(ELF_OUT): $(OBJS)
 
 shared_%.o: $(SHARED_DIR)/%.S
 	$(CC) $(ASFLAGS) $< -o $@
+
+shared_%.o: $(SHARED_DIR)/%.c
+	$(CC) $(CFLAGS) $< -o $@
 
 # Rule to clean build artifacts
 .PHONY: clean
