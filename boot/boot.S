@@ -12,9 +12,9 @@ _start:
     AND r0, r0, #0x3            // Mask to get CPU ID (bits [1:0])
 
     ////////////////////////////////////////////////////////////////////////
-    // Store the core ID into a known memory location for the application to read. Using address 0x10000000 in a RAM region accessible by all cores at startup.
+    // Store the core ID into a known memory location for the application to read. Using address 0x00400000 in a RAM region accessible by all cores at startup.
 
-    // LDR r1, =0x10000000         // Load the address of our shared structure:
+    // LDR r1, =0x00400000         // Load the address of our shared structure:
                                 // boot_args_t
     // LDR r2, =0x4                // Size of boot_args_t 
                                 // structure                                

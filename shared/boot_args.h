@@ -15,6 +15,6 @@ typedef struct {
 
 // Define the fixed memory address for the boot arguments structure.
 // This must be placed in a region of RAM accessible by all cores at startup.
-#define BOOT_ARGS_ADDR (0x10000000)
+#define BOOT_ARGS_ADDR (0x00400000)
 
 #endif // BOOT_ARGS_H

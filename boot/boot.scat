@@ -8,7 +8,7 @@ LR_BOOT 0x00000000 0x00010000   ; 64 KB boot ROM
         .ANY (+RO)
     }
 
-    SHARED_RW   0x10000000 0x1000
+    SHARED_RW   0x00400000 0x1000
     {
         * (BOOT_ARGS)
     }
