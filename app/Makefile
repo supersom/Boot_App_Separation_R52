@@ -26,7 +26,9 @@ SHARED_SRCS_S = $(wildcard $(SHARED_DIR)/*.S)
 SHARED_SRCS_C = $(filter-out $(SHARED_DIR)/GIC.c,$(wildcard $(SHARED_DIR)/*.c))
 SHARED_OBJS = $(patsubst $(SHARED_DIR)/%.S, shared_%.o, $(SHARED_SRCS_S))
 SHARED_OBJS_C = $(patsubst $(SHARED_DIR)/%.c, shared_%.o, $(SHARED_SRCS_C))
-OBJS   = $(SRCS_C:.c=.o) $(SRCS_S:.S=.o) $(SHARED_OBJS) $(SHARED_OBJS_C)
+OBJDIR = Debug
+OBJS   = $(addprefix $(OBJDIR)/,$(SRCS_C:.c=.o) $(SRCS_S:.S=.o)) \
+         $(addprefix $(OBJDIR)/,$(SHARED_OBJS) $(SHARED_OBJS_C))
 
 # Default target
 .PHONY: all
@@ -37,17 +39,21 @@ $(ELF_OUT): $(OBJS)
 	$(LD) $(LDFLAGS) --scatter=$(TARGET_NAME).scat --entry=app_bootloader -o $@ $(OBJS)
 
 # Pattern rule to compile C source
-%.o: %.c
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(OBJDIR)
 	$(CC) $(CFLAGS) $< -o $@
 
 # Pattern rule to assemble .S source
-%.o: %.S
+$(OBJDIR)/%.o: %.S
+	@mkdir -p $(OBJDIR)
 	$(CC) $(ASFLAGS) $< -o $@
 
-shared_%.o: $(SHARED_DIR)/%.S
+$(OBJDIR)/shared_%.o: $(SHARED_DIR)/%.S
+	@mkdir -p $(OBJDIR)
 	$(CC) $(ASFLAGS) $< -o $@
 
-shared_%.o: $(SHARED_DIR)/%.c
+$(OBJDIR)/shared_%.o: $(SHARED_DIR)/%.c
+	@mkdir -p $(OBJDIR)
 	$(CC) $(CFLAGS) $< -o $@
 
 # Rule to clean build artifacts
