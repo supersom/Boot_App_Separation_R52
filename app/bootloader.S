@@ -45,7 +45,17 @@ L_switch_to_svc:
 L_setup_stack:
     // We are now in a privileged EL1 mode (e.g., SVC).
     // Set up the stack pointer for this mode before calling any C code.
-    ldr sp, =Image$$ARM_LIB_STACK$$Base
+    ldr sp, =Image$$ARM_LIB_STACK$$ZI$$Limit
+
+    // Configure MPU early so shared flags are non-cacheable/shareable.
+    bl init_mpu
+
+    // // Debug: set GICD_initialized early to confirm visibility.
+    // ldr r1, =0x00400098
+    // mov r0, #0x1
+    // str r0, [r1]
+    // dsb sy
+    // sev
 
     // Primary core initializes GIC Distributor and core interface.
     // bl Primary_GIC_Setup
