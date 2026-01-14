@@ -189,10 +189,13 @@ CTCM_initialized:
 	.word 0
 
 // Flag tracking whether the GICD has been initialized.
-.balign 8
-GICD_initialized: .word 0
+// Defined as an absolute symbol to bypass C runtime initialization entirely.
+// Located at 0x00400004 (inside SHARED_UNINIT region, after 4-byte BOOT_ARGS).
+.global GICD_initialized
+.equ GICD_initialized, 0x00400004
 
 // lock variable controlling access to print resource
+.section FLAGS, "aw"
 .balign 8
 printf_lock:
     .word 0
