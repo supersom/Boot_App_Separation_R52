@@ -6,7 +6,7 @@
     .global switch_to_svc_common
     .type switch_to_svc_common, "function"
 switch_to_svc_common:
-    // r0 = setup stack address for VBAR and ELR
+    // r0 = setup stack address for ELR
     // Init HSCTLR
     LDR r1, =0x30C5180C             // See TRM for decoding
     MCR p15, 4, r1, c1, c0, 0       // Write to HSCTLR
@@ -16,7 +16,8 @@ switch_to_svc_common:
     MCR p15, 4, r1, c1, c0, 1       // Write to HACTLR
 
     // Change EL1 exception base address
-    MCR p15, 0, r0, c12, c0, 0      // Write to VBAR
+    LDR r1, =el1_vector_table
+    MCR p15, 0, r1, c12, c0, 0      // Write to VBAR
 
     // Disable execution of HVC instructions
     MRC p15, 4, r1, c1, c1, 0       // Read HCR
@@ -69,3 +70,51 @@ setup_stack_secondary:
 
     // Jump to the C runtime entry point for this app.
     b __main
+
+    .section .text.el1_vectors, "ax"
+    .align 5
+el1_vector_table:
+    b el1_vector_reset
+    b el1_vector_undef
+    b el1_vector_svc
+    b el1_vector_pabort
+    b el1_vector_dabort
+    b el1_vector_hyp
+    b el1_vector_irq
+    b el1_vector_fiq
+
+el1_vector_reset:
+    b el1_default_handler
+el1_vector_undef:
+    b el1_default_handler
+el1_vector_svc:
+    b el1_default_handler
+el1_vector_pabort:
+    b el1_default_handler
+el1_vector_dabort:
+    b el1_default_handler
+el1_vector_hyp:
+    b el1_default_handler
+el1_vector_fiq:
+    b el1_default_handler
+
+el1_default_handler:
+    b el1_default_handler
+
+    .extern readAliasedIntAck
+    .extern writeAliasedEOI
+    .extern GICIsrVectorTable_COM
+
+el1_vector_irq:
+    push {r0-r3, r12, lr}
+    bl readAliasedIntAck
+    mov r1, r0
+    ldr r4, =0x3FF
+    and r0, r0, r4
+    ldr r2, =GICIsrVectorTable_COM
+    ldr r3, [r2, r0, lsl #2]
+    blx r3
+    mov r0, r1
+    bl writeAliasedEOI
+    pop {r0-r3, r12, lr}
+    subs pc, lr, #4
