@@ -41,6 +41,17 @@ setup_stack_primary:
     // We are now in a privileged EL1 mode (e.g., SVC).
     // Set up the stack pointer for this mode before calling any C code.
     ldr sp, =Image$$ARM_LIB_STACK$$ZI$$Limit
+    // Use a lower slice of ARM_LIB_STACK for IRQ mode.
+    mrs r1, cpsr
+    bic r1, r1, #0x1F
+    orr r1, r1, #0xD2  // IRQ mode, IRQ/FIQ disabled
+    msr cpsr_c, r1
+    ldr sp, =Image$$ARM_LIB_STACK$$ZI$$Limit
+    sub sp, sp, #0x1000
+    mrs r1, cpsr
+    bic r1, r1, #0x1F
+    orr r1, r1, #0xD3  // Back to SVC mode
+    msr cpsr_c, r1
 
     // Configure MPU early so shared flags are non-cacheable/shareable.
     bl init_mpu
@@ -58,6 +69,17 @@ setup_stack_secondary:
     // We are now in a privileged EL1 mode (e.g., SVC).
     // Set up the stack pointer for this mode before calling any C code.
     ldr sp, =Image$$ARM_LIB_STACK$$ZI$$Limit
+    // Use a lower slice of ARM_LIB_STACK for IRQ mode.
+    mrs r1, cpsr
+    bic r1, r1, #0x1F
+    orr r1, r1, #0xD2  // IRQ mode, IRQ/FIQ disabled
+    msr cpsr_c, r1
+    ldr sp, =Image$$ARM_LIB_STACK$$ZI$$Limit
+    sub sp, sp, #0x1000
+    mrs r1, cpsr
+    bic r1, r1, #0x1F
+    orr r1, r1, #0xD3  // Back to SVC mode
+    msr cpsr_c, r1
 
     // Configure MPU early so shared flags are non-cacheable/shareable.
     bl init_mpu
