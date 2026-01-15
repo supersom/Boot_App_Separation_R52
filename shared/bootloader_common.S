@@ -60,6 +60,16 @@ setup_stack_primary:
     bl init_GICD
     bl Corewise_GIC_Setup
 
+    // Wake secondary cores after per-core GIC setup.
+    // SGI ID = 0, Group 1, target list: core 1/2/3.
+    mov r0, #0
+    mov r1, #0
+    mov r2, #0
+    orr r2, r2, #0x2      // core 1
+    orr r2, r2, #0x4      // core 2
+    orr r2, r2, #0x8      // core 3
+    bl sendGroup1SGI
+
     // Jump to the C runtime entry point for this app.
     b __main
 
@@ -89,6 +99,16 @@ setup_stack_secondary:
 
     // Secondary core initializes its GIC Redistributor and core interface.
     bl Corewise_GIC_Setup
+
+    // Enable SGI 0 for this core and wait for the primary to wake us.
+    mov r0, #0            // SGI ID
+    mov r1, #0x3F         // priority
+    mov r2, #0            // IRQ (Group 1)
+    mrc p15, 0, r3, c0, c0, 5
+    and r3, r3, #0xFF
+    bl GIC_enable_SGI_PPI_ASM
+    cpsie i
+    bl wait
 
     // Jump to the C runtime entry point for this app.
     b __main
