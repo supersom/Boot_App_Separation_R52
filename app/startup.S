@@ -1,5 +1,6 @@
     .syntax unified
     .arm
+    .eabi_attribute 25, 1
 
     .section .text.bootloader, "ax"
 
