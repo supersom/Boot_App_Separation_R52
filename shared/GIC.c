@@ -135,8 +135,10 @@ void GIC_disable_SGI_PPI(uint32_t INTn, uint32_t core_id)
 
 void GIC_enableVirtualTimerInterrupt(void)
 {
-	GIC_enable_SGI_PPI(1, 0x3F, 0, 0); //(INTn, priority, FIQ, core_id)
-	GIC_enable_SGI_PPI(27, 0x7F, 0, 0); //(INTn, priority, FIQ, core_id)
+	uint32_t aff[3] = {1, 0, 0}; // targeting core 0, but init to core 1 for robustness
+	getAffinity(&aff[0],&aff[1],&aff[2]);
+	GIC_enable_SGI_PPI(1, 0x3F, 1, aff[0]); //(INTn, priority, FIQ, core_id)
+	GIC_enable_SGI_PPI(27, 0x7F, 1, aff[0]); //(INTn, priority, FIQ, core_id)
 }
 
 void GIC_enableDualTimer0Interrupt(void)
@@ -154,7 +156,7 @@ void GIC_enableDualTimer1Interrupt(void)
 	uint32_t aff[3] = {1, 0, 0}; // targeting core 0, but init to core 1 for robustness
 	getAffinity(&aff[0],&aff[1],&aff[2]);
 	printf("Setting up INT (DualTimer1) from and targeting Core %d.%d.%d\n",aff[2],aff[1],aff[0]);
-	GIC_enable_SPI(SPI_ID, 0x1F, 0, 1, aff); // (INTn, priority, FIQ, edge_trigger, affinity)
+	GIC_enable_SPI(SPI_ID, 0x1F, 1, 1, aff); // (INTn, priority, FIQ, edge_trigger, affinity)
 }
 
 // Dummy function which is entered (ISR) if any non-used vector is called.
