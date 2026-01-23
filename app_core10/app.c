@@ -44,14 +44,14 @@ int main(void)
     __asm volatile("MRC p15, 0, %0, c0, c0, 5" : "=r" (mpidr));
     uint32_t core_id = mpidr & 0xFF;
 
-    printf("[%s] core_id=%u\n", "app_core10", (unsigned)core_id);
+    printf("\n[%s] core_id=%u\n", "app_core10", (unsigned)core_id);
 
     // Simple “I’m alive” loop
     volatile uint32_t counter = 0;
     while (1)
     {
         counter++;
-        printf("App (core 10) is alive: %u\n", counter);
+        // printf("App (core 10) is alive: %u\n", counter);
         sleep_busy_wait(10000000);
     }
 }
