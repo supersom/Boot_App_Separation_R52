@@ -5,6 +5,9 @@
 #include "common_defs.h"
 #include "generictimer.h"
 #include "spinlock.h"
+#include "dual_timer.h"
+#include "v8rgicv3cpuif.h"
+#include "GICv3.h"
 // #include "../shared/boot_args.h"
 
 // This is the application's entry point.
@@ -26,8 +29,23 @@ const volatile uint32_t app_vector_table[] = {
 // __attribute__ ((section("BOOT_ARGS"), used))
 // volatile boot_args_t* boot_args = (boot_args_t*)BOOT_ARGS_ADDR;
 
+extern void GIC_enableVirtualTimerInterrupt(void);
+extern void GIC_enableDualTimer0Interrupt(void);
+extern void GIC_enableDualTimer1Interrupt(void);
+extern void (*GICIsrVectorTable[1024])(void);
+
+static float calculate(float a, float b);
 static void enableSystemCounter(void);
 static void waitForEnableSystemCounter(void);
+static void waitForEnableSystemCounter(void);
+static void enableDualTimer0(unsigned int period);
+static void enableDualTimer1(unsigned int period);
+
+void SGI1IRQhandler(void);
+void virtualTimerIRQhandler(void);
+void DualTimer0INThandler(void);
+void DualTimer1INThandler(void);
+// void SGI0IRQHandler(void);
 
 // Approximate sleep - highly dependent on CPU clock speed
 void sleep_busy_wait(unsigned int iterations) {

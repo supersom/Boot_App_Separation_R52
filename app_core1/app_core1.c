@@ -5,6 +5,9 @@
 #include "common_defs.h"
 #include "generictimer.h"
 #include "spinlock.h"
+#include "dual_timer.h"
+#include "v8rgicv3cpuif.h"
+#include "GICv3.h"
 // #include "../shared/boot_args.h"
 
 // This is the application's entry point.
