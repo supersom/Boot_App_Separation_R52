@@ -63,6 +63,9 @@ setup_stack_primary:
     // Configure MPU early so shared flags are non-cacheable/shareable.
     bl init_mpu
 
+    // Enable FP/NEON before any C code uses floating point.
+    bl enable_fpu
+
     // Primary core initializes GIC Distributor and core interface.
     bl init_GICD
     bl Corewise_GIC_Setup
@@ -107,6 +110,9 @@ setup_stack_secondary:
 
     // Configure MPU early so shared flags are non-cacheable/shareable.
     bl init_mpu
+
+    // Enable FP/NEON before any C code uses floating point.
+    bl enable_fpu
 
     // Wait for primary core to initialize GICD before per-core setup.
     bl awaitGICDInit
