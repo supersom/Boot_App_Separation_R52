@@ -1,13 +1,10 @@
 // app.c – second ELF, linked at 0x00800000
 
 #include <stdint.h>
+#include <stdio.h>
 #include "common_defs.h"
-#include "dual_timer.h"
 #include "generictimer.h"
 #include "spinlock.h"
-#include "GICv3.h"
-#include "v8rgicv3cpuif.h"
-#include "utils.h"
 // #include "../shared/boot_args.h"
 
 // This is the application's entry point.
@@ -20,18 +17,17 @@ extern void app_bootloader(void);
 
 // Application's vector table.
 // The first entry is the initial stack pointer, the second is the reset handler.
-__attribute__ ((section(".app_vector_table"), used))
+__attribute__((section(".app_vector_table"), used))
 const volatile uint32_t app_vector_table[] = {
     STACK_TOP,
-    (uint32_t) app_bootloader
-};
+    (uint32_t)app_bootloader};
 
 // __attribute__ ((section("BOOT_ARGS"), used))
 // volatile boot_args_t* boot_args = (boot_args_t*)BOOT_ARGS_ADDR;
 
 // #define ONESECOND 0xF424
 // #define MILLISECOND 0x2DC6C
-#define CNTCONTROLBASE 0xAA430000
+// #define CNTCONTROLBASE 0xAA430000
 #define TIMER1
 
 // extern unsigned int __heap_base_com;
@@ -43,6 +39,7 @@ extern void (*GICIsrVectorTable[1024])(void);
 
 static float calculate(float a, float b);
 static void enableSystemCounter(void);
+static void waitForEnableSystemCounter(void);
 static void enableDualTimer0(unsigned int period);
 static void enableDualTimer1(unsigned int period);
 
@@ -53,9 +50,11 @@ void DualTimer1INThandler(void);
 // void SGI0IRQHandler(void);
 
 // Approximate sleep - highly dependent on CPU clock speed
-void sleep_busy_wait(unsigned int iterations) {
+void sleep_busy_wait(unsigned int iterations)
+{
     volatile unsigned int i;
-    for (i = 0; i < iterations; i++) {
+    for (i = 0; i < iterations; i++)
+    {
         // Do nothing, just burn cycles
         __asm volatile("nop");
     }
@@ -70,7 +69,7 @@ int main(void)
     // volatile unsigned int *heap_probe = &__heap_base_com;
     // (void)heap_probe;
 
-    __asm volatile("MRC p15, 0, %0, c0, c0, 5" : "=r" (mpidr));
+    __asm volatile("MRC p15, 0, %0, c0, c0, 5" : "=r"(mpidr));
     uint32_t core_id = mpidr & 0xFF;
 
     printf("[%s] core_id=%u\n", "app_core1", (unsigned)core_id);
@@ -103,9 +102,14 @@ int main(void)
 //     __asm volatile ("CPSIE if");
     // Simple “I’m alive” loop
     volatile uint32_t counter = 0;
-    while (1) {
+    while (1)
+    {
         counter++;
-        printf("App (core 01) is alive: %u\n", counter);
+        uint32_t hppir, rpr;
+        __asm volatile("MRC p15, 0, %0, c12, c8, 0" : "=r"(hppir)); // ICC_HPPIR0
+        __asm volatile("MRC p15, 0, %0, c12, c11, 3" : "=r"(rpr));  // ICC_RPR
+        spinlock_printf("\nC01: HPPIR0=0x%x RPR=0x%x\n", hppir, rpr);
+        spinlock_printf("C01: CNTPCT @ %u: %llu\n", counter, getCNTPCT());
         sleep_busy_wait(10000000);
     }
 }
