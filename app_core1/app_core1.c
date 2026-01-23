@@ -72,34 +72,50 @@ int main(void)
     __asm volatile("MRC p15, 0, %0, c0, c0, 5" : "=r"(mpidr));
     uint32_t core_id = mpidr & 0xFF;
 
-    printf("[%s] core_id=%u\n", "app_core1", (unsigned)core_id);
+    spinlock_printf("\n[%s] core_id=%u\n", "app_core1", (unsigned)core_id);
 
-// #ifdef __ARM_FP
-//     printf("Floating point calculation using the FPU...\n");
-// #else
-//     printf("Floating point calculation using the software floating point library (no FPU)...\n");
-// #endif
-//     printf("Float result is        %f\n", calculate(1.5f, 2.5f));
-//     printf("Float result should be 0.937500\n");
+#ifdef __ARM_FP
+    spinlock_printf("Floating point calculation using the FPU...\n");
+#else
+    spinlock_printf("Floating point calculation using the software floating point library (no FPU)...\n");
+#endif
+    spinlock_printf("Float result is        %f\n", calculate(1.5f, 2.5f));
+    spinlock_printf("Float result should be 0.937500\n");
 
-//     enableSystemCounter();
-//     setCNTV_TVAL(MILLISECOND);
-//     enableVirtualTimer();
+    enableSystemCounter();
+    waitForEnableSystemCounter();
+    setCNTV_TVAL(MILLISECOND);
+    enableVirtualTimer();
 
-//     GICIsrVectorTable[1] = SGI1IRQhandler;
-//     GICIsrVectorTable[27] = virtualTimerIRQhandler;
-//     GIC_enableVirtualTimerInterrupt();
+    GICIsrVectorTable[1] = SGI1IRQhandler;
+    GICIsrVectorTable[27] = virtualTimerIRQhandler;
+    GIC_enableVirtualTimerInterrupt();
 
-// #ifdef TIMER1
-//     GICIsrVectorTable[34] = DualTimer0INThandler;
-//     enableDualTimer0(ONESECOND);
-//     GIC_enableDualTimer0Interrupt();
-// #else
-//     enableDualTimer1(0x29aa);
-//     GIC_enableDualTimer1Interrupt();
-// #endif
+#ifdef TIMER1
+    GICIsrVectorTable[34] = DualTimer0INThandler;
+    enableDualTimer0(ONESECOND);
+    GIC_enableDualTimer0Interrupt();
+#else
+    GICIsrVectorTable[35] = DualTimer1INThandler;
+    enableDualTimer1(0x29aa);
+    GIC_enableDualTimer1Interrupt();
+#endif
 
-//     __asm volatile ("CPSIE if");
+    __asm volatile("CPSIE if");
+
+    spinlock_printf("C01: Waiting for interrupt...\n");
+    while (1)
+    {
+        // Check if timer condition is met
+        uint32_t ctl;
+        __asm volatile("MRC p15, 0, %0, c14, c3, 1" : "=r"(ctl));
+        if (ctl & 0x4)
+        { // ISTATUS bit
+            spinlock_printf("C01: Timer condition met! CTL=0x%x\n", ctl);
+            break;
+        }
+    }
+
     // Simple “I’m alive” loop
     volatile uint32_t counter = 0;
     while (1)
@@ -129,30 +145,41 @@ static void enableSystemCounter(void)
     *cntcr |= 0x7;
 }
 
+// Busy-wait until the system counter acknowledges enable.
+// CNTCR bit0 (ENABLE) goes high once the counter is running.
+static void waitForEnableSystemCounter(void)
+{
+    volatile uint32_t *cntcr = (volatile uint32_t *)CNTCONTROLBASE;
+    while (((*cntcr) & 0x1) == 0) {
+        __asm volatile("nop");
+    }
+}
+
 static void enableDualTimer0(unsigned int period)
 {
     DT_SP804.Timer1Control = 0x0;
-    printf("Timer1Control = 0x%x\n", DT_SP804.Timer1Control & 0xEF);
+    spinlock_printf("C01: Timer1Control = 0x%x\n", DT_SP804.Timer1Control & 0xEF);
     DT_SP804.Timer1Load = period;
-    printf("Timer1Load = 0x%x\n", DT_SP804.Timer1Load);
+    spinlock_printf("C01: Timer1Load = 0x%x\n", DT_SP804.Timer1Load);
     DT_SP804.Timer1Control = 0xe2;
-    printf("Timer1Control = 0x%x\n", DT_SP804.Timer1Control & 0xEF);
-    printf("Timer1RIS = 0x%x\n", DT_SP804.Timer1RIS & 0x1);
+    spinlock_printf("C01: Timer1Control = 0x%x\n", DT_SP804.Timer1Control & 0xEF);
+    spinlock_printf("C01: Timer1RIS = 0x%x\n", DT_SP804.Timer1RIS & 0x1);
 }
 
 static void enableDualTimer1(unsigned int period)
 {
-    DT_SP804.Timer2Control = 0x0;
-    printf("Timer2Control = 0x%x\n", DT_SP804.Timer2Control & 0xEF);
-    DT_SP804.Timer2Load = period;
-    printf("Timer2Load = 0x%x\n", DT_SP804.Timer2Load);
-    DT_SP804.Timer2Control = 0xe2;
-    printf("Timer2Control = 0x%x\n", DT_SP804.Timer2Control & 0xEF);
-    printf("Timer2RIS = 0x%x\n", DT_SP804.Timer2RIS & 0x1);
+    DT_SP804_2.Timer1Control = 0x0;
+    spinlock_printf("C01: Timer2Control = 0x%x\n", DT_SP804_2.Timer1Control & 0xEF);
+    DT_SP804_2.Timer1Load = period;
+    spinlock_printf("C01: Timer2Load = 0x%x\n", DT_SP804_2.Timer1Load);
+    DT_SP804_2.Timer1Control = 0xe2;
+    spinlock_printf("C01: Timer2Control = 0x%x\n", DT_SP804_2.Timer1Control & 0xEF);
+    spinlock_printf("C01: Timer2RIS = 0x%x\n", DT_SP804_2.Timer1RIS & 0x1);
 }
 
 void virtualTimerIRQhandler(void)
 {
+    // spinlock_printf("VT!\n");
     setCNTV_TVAL(MILLISECOND);
     sendGroup0SGI(0x01000000 /* ID 1 */, 0x0 /* IRM 0 */, 0x2 /* Target CPU1 */);
 }
@@ -174,7 +201,7 @@ void SGI1IRQhandler(void)
     static uint32_t Hours;
     static uint32_t ms = 1;
 
-    if (ms==1000)
+    if (ms == 1000)
     {
         ms = 1;
 
@@ -205,31 +232,31 @@ void SGI1IRQhandler(void)
         }
         if (Hours >= 10)
         {
-            printf("%d",Hours);
+            spinlock_printf("%d", Hours);
         }
         else
         {
-            printf("0%d",Hours);
+            spinlock_printf("0%d", Hours);
         }
-        printf(":");
+        spinlock_printf(":");
         if (Minutes >= 10)
         {
-            printf("%d",Minutes);
+            spinlock_printf("%d", Minutes);
         }
         else
         {
-            printf("0%d",Minutes);
+            spinlock_printf("0%d", Minutes);
         }
-        printf(":");
+        spinlock_printf(":");
         if (Seconds >= 10)
         {
-            printf("%d",Seconds);
+            spinlock_printf("%d", Seconds);
         }
         else
         {
-            printf("0%d",Seconds);
+            spinlock_printf("0%d", Seconds);
         }
-        printf(": C01: Entered FIQ handler for SGI (1) <- PPI (27) <- VirtualTimer\n");
+        spinlock_printf(": C01: Entered FIQ handler for SGI (1) <- PPI (27) <- VirtualTimer\n");
     }
     else
         ms++;
@@ -237,18 +264,18 @@ void SGI1IRQhandler(void)
 
 void DualTimer0INThandler(void)
 {
-    if(GICD.IGROUPR[1])
-        printf("C01: Entered IRQ handler for SPI (34) triggered by DualTimer0\n\n");
+    if (GICD.IGROUPR[1])
+        spinlock_printf("C01: Entered IRQ handler for SPI (34) triggered by DualTimer0\n\n");
     else
-        printf("C01: Entered FIQ handler for SPI (34) triggered by DualTimer0\n\n");
+        spinlock_printf("C01: Entered FIQ handler for SPI (34) triggered by DualTimer0\n\n");
     DT_SP804.Timer1IntClr = 0x0; // Clear timer interrupt
 }
 
 void DualTimer1INThandler(void)
 {
-    if(GICD.IGROUPR[1])
-        printf("C01: Entered IRQ handler for SPI (35) triggered by DualTimer1\n\n");
+    if (GICD.IGROUPR[1])
+        spinlock_printf("C01: Entered IRQ handler for SPI (35) triggered by DualTimer1\n\n");
     else
-        printf("C01: Entered FIQ handler for SPI (35) triggered by DualTimer1\n\n");
-    DT_SP804.Timer2IntClr = 0x0; // Clear timer interrupt
+        spinlock_printf("C01: Entered FIQ handler for SPI (35) triggered by DualTimer1\n\n");
+    DT_SP804_2.Timer1IntClr = 0x0; // Clear timer interrupt
 }
