@@ -103,12 +103,7 @@ pmccntr_c11_diff_val:
 // Flag variables - to be placed in RW memory shared across cores
 //=================================================================================
 
-	.section FLAGS, "aw"
-// Flag tracking whether the standard C library has been initialized.
-.balign 8
-C_library_initialized:
-    .word 0
-
+.if 0
 // Flag tracking whether a core is waiting.
 .balign 8
 Core_waiting:
@@ -123,6 +118,25 @@ Core_initialized:
     .word 0
     .word 0
     .word 0
+    .word 0
+.endif
+
+// Flag tracking whether Core_waiting has been initialized.
+// Defined as an absolute symbol to bypass C runtime initialization entirely.
+// Located at 0x00400008 (inside SHARED_UNINIT region, after 4-byte BOOT_ARGS).
+.global Core_waiting
+.equ Core_waiting, 0x00400008
+
+// Flag tracking whether Core_initialized has been initialized.
+// Defined as an absolute symbol to bypass C runtime initialization entirely.
+// Located at 0x00400018 (inside SHARED_UNINIT region, after 4-byte BOOT_ARGS).
+.global Core_initialized
+.equ Core_initialized, 0x00400018
+
+	.section FLAGS, "aw"
+// Flag tracking whether the standard C library has been initialized.
+.balign 8
+C_library_initialized:
     .word 0
 
 // Flag tracking whether Core 1 is waiting.
@@ -380,9 +394,6 @@ markCoreWaiting:
 .global isCoreWaiting
 .type isCoreWaiting, "function"
 isCoreWaiting:
-@	BL getCPUID
-    MRC p15, 0, r0, c0, c0, 5   // Read MPIDR into R0
-    ANDS r0, r0, 0xFF
     LDR r2, =Core_waiting
     ADD r2, r2, r0, LSL #2     // add r0 * 4 to r2 and store in r2
     LDR r3, [r2]
