@@ -70,6 +70,18 @@ setup_stack_primary:
     // Configure MPU early so shared flags are non-cacheable/shareable.
     bl init_mpu
 
+    // Enable TCMs for Core 0 before __scatterload runs.
+    ldr r0, =0x01000000             // Core 0 ATCM base
+    ldr r1, =0x02000000             // Core 0 BTCM base
+    ldr r2, =0x03000000             // Core 0 CTCM base
+    push {r1, r2}
+    bl Enable_ATCM
+    pop {r0, r2}
+    push {r2}
+    bl Enable_BTCM
+    pop {r0}
+    bl Enable_CTCM
+
     // Enable FP/NEON before any C code uses floating point.
     bl enable_fpu
 
@@ -178,7 +190,7 @@ tcm_enable:
 tcm_done:
 
     // Enable FP/NEON before any C code uses floating point.
-    // bl enable_fpu
+    bl enable_fpu
 
     // Wait for primary core to initialize GICD before per-core setup.
     bl awaitGICDInit
