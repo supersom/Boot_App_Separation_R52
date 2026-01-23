@@ -55,6 +55,13 @@ setup_stack_primary:
     msr cpsr_c, r1
     ldr sp, =Image$$ARM_LIB_STACK$$ZI$$Limit
     sub sp, sp, #0x2000
+    // Use a lower slice of ARM_LIB_STACK for ABT mode.
+    mrs r1, cpsr
+    bic r1, r1, #0x1F
+    orr r1, r1, #0xD7  // ABT mode, IRQ/FIQ disabled
+    msr cpsr_c, r1
+    ldr sp, =Image$$ARM_LIB_STACK$$ZI$$Limit
+    sub sp, sp, #0x3000
     mrs r1, cpsr
     bic r1, r1, #0x1F
     orr r1, r1, #0xD3  // Back to SVC mode
@@ -119,6 +126,13 @@ setup_stack_secondary:
     msr cpsr_c, r1
     ldr sp, =Image$$ARM_LIB_STACK$$ZI$$Limit
     sub sp, sp, #0x2000
+    // Use a lower slice of ARM_LIB_STACK for ABT mode.
+    mrs r1, cpsr
+    bic r1, r1, #0x1F
+    orr r1, r1, #0xD7  // ABT mode, IRQ/FIQ disabled
+    msr cpsr_c, r1
+    ldr sp, =Image$$ARM_LIB_STACK$$ZI$$Limit
+    sub sp, sp, #0x3000
     mrs r1, cpsr
     bic r1, r1, #0x1F
     orr r1, r1, #0xD3  // Back to SVC mode
