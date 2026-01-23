@@ -141,6 +141,42 @@ setup_stack_secondary:
     // Configure MPU early so shared flags are non-cacheable/shareable.
     bl init_mpu
 
+    // Enable TCMs for this core before __scatterload runs.
+    // __scatterload will try to zero TCM .bss regions.
+    mrc p15, 0, r4, c0, c0, 5       // Read MPIDR
+    and r4, r4, #0x3                // Isolate core ID bits
+    cmp r4, #0x1
+    beq tcm_core1
+    cmp r4, #0x2
+    beq tcm_core2
+    cmp r4, #0x3
+    beq tcm_core3
+    b tcm_done                      // Core 0 shouldn't reach here (uses setup_stack_primary)
+tcm_core1:
+    ldr r0, =0x05000000             // Core 1 ATCM base
+    ldr r1, =0x06000000             // Core 1 BTCM base
+    ldr r2, =0x07000000             // Core 1 CTCM base
+    b tcm_enable
+tcm_core2:
+    ldr r0, =0x09000000             // Core 2 ATCM base
+    ldr r1, =0x0A000000             // Core 2 BTCM base
+    ldr r2, =0x0B000000             // Core 2 CTCM base
+    b tcm_enable
+tcm_core3:
+    ldr r0, =0x0D000000             // Core 3 ATCM base
+    ldr r1, =0x0E000000             // Core 3 BTCM base
+    ldr r2, =0x0F000000             // Core 3 CTCM base
+tcm_enable:
+    // Save BTCM/CTCM bases before calling Enable_ATCM
+    push {r1, r2}
+    bl Enable_ATCM
+    pop {r0, r2}
+    push {r2}
+    bl Enable_BTCM
+    pop {r0}
+    bl Enable_CTCM
+tcm_done:
+
     // Enable FP/NEON before any C code uses floating point.
     // bl enable_fpu
 
