@@ -64,7 +64,7 @@ setup_stack_primary:
     bl init_mpu
 
     // Enable FP/NEON before any C code uses floating point.
-    bl enable_fpu
+    // bl enable_fpu
 
     // Primary core initializes GIC Distributor and core interface.
     bl init_GICD
@@ -112,7 +112,7 @@ setup_stack_secondary:
     bl init_mpu
 
     // Enable FP/NEON before any C code uses floating point.
-    bl enable_fpu
+    // bl enable_fpu
 
     // Wait for primary core to initialize GICD before per-core setup.
     bl awaitGICDInit
