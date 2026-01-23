@@ -37,9 +37,14 @@ void sleep_busy_wait(unsigned int iterations) {
 // void app_entry(void)
 int main(void)
 {
-    // uint32_t my_core_id = boot_args->core_id;
-    // // Print the ID received from the bootloader
-    // printf("Application started on core %u\n", my_core_id);
+    uint32_t mpidr;
+    // volatile unsigned int *heap_probe = &__heap_base_com;
+    // (void)heap_probe;
+
+    __asm volatile("MRC p15, 0, %0, c0, c0, 5" : "=r" (mpidr));
+    uint32_t core_id = mpidr & 0xFF;
+
+    printf("[%s] core_id=%u\n", "app_core10", (unsigned)core_id);
 
     // Simple “I’m alive” loop
     volatile uint32_t counter = 0;
