@@ -70,6 +70,22 @@ setup_stack_primary:
     bl init_GICD
     bl Corewise_GIC_Setup
 
+    // Wait for secondaries to enable SGI0 and enter WFI.
+wait_secondaries:
+//.if 0
+    mov r0, #1
+    bl isCoreWaiting
+    cmp r0, #0x1
+    bne wait_secondaries
+    mov r0, #2
+    bl isCoreWaiting
+    cmp r0, #0x1
+    bne wait_secondaries
+    mov r0, #3
+    bl isCoreWaiting
+    cmp r0, #0x1
+    bne wait_secondaries
+//.endif
     // Wake secondary cores after per-core GIC setup.
     // SGI ID = 0, Group 1, target list: core 1/2/3.
     mov r0, #0
@@ -127,6 +143,8 @@ setup_stack_secondary:
     mrc p15, 0, r3, c0, c0, 5
     and r3, r3, #0xFF
     bl GIC_enable_SGI_PPI_ASM
+    // Signal readiness to the primary before entering WFI.
+    bl markCoreWaiting
     cpsie i
     bl wait
 
