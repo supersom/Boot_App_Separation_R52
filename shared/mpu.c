@@ -41,12 +41,12 @@ void init_mpu(void)
     );
 
     // Region 6: BOOT_ARGS_ADDR (0x00400000) - Size 4KB - Shared Flags
-    // Access: RW, Not-Executable, Device-nGnRnE (Strongly Ordered), Shareable
+    // Access: RW, Not-Executable, Normal WB WA, Shareable
     // Note: Device memory is always Outer Shareable.
     uint32_t limit_6 = BOOT_ARGS_ADDR + 0x1000 - 1;
     mpu_config_region(6, 
         BOOT_ARGS_ADDR | AP_RW_ALL | SH_OUTER_SHAREABLE | MPU_RBAR_XN,
-        (limit_6 & 0xFFFFFFE0) | (MAIR_ATTR0_IDX << 1) | MPU_RLAR_EN
+        (limit_6 & 0xFFFFFFE0) | (MAIR_ATTR1_IDX << 1) | MPU_RLAR_EN
     );
 
     // Regions 7-9: Per-core TCMs (RW, executable, non-shareable, non-cacheable)
