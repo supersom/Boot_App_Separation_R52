@@ -388,6 +388,25 @@ init_GICC:
     MOV pc, lr
 
 //----------------------------------------------------------------
+// Enable FP/NEON
+//----------------------------------------------------------------
+
+    .global enable_fpu
+    .type enable_fpu, "function"
+enable_fpu:
+    // Enable CP10/CP11 access at EL1.
+    MRC p15, 0, r0, c1, c0, 2
+    ORR r0, r0, #(0xF << 20)
+    MCR p15, 0, r0, c1, c0, 2
+    ISB
+
+    // Enable VFP/NEON in FPEXC.
+    VMRS r0, FPEXC
+    ORR r0, r0, #0x40000000
+    VMSR FPEXC, r0
+    BX lr
+
+//----------------------------------------------------------------
 // Enable Instruction and Data Caching
 //----------------------------------------------------------------
 
