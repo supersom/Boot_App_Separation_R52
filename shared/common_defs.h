@@ -16,6 +16,14 @@
 #ifndef COMMON_DEFS_H_
 #define COMMON_DEFS_H_
 
+// #define DISABLE_PRINTF
+// #ifdef DISABLE_PRINTF
+// // Redefine printf after including its prototype to avoid macro clashes
+// #include <stdio.h>
+// #undef printf
+// #define printf(...) ((void)0)
+// #endif
+
 // MPU region defines
 
 // Protection Region Base Address Register
@@ -56,7 +64,7 @@
 
 // Constants
 #define ONESECOND 0xF4240       //assuming 1MHz SP804 clock
-#define MILLISECOND 0x2DC6C0 //0x186A0		//100000 assuming 100MHz
+#define MILLISECOND 0x186A0 //0x2DC6C0		//100000 assuming 100MHz
 #ifdef FVP_FAST_MODEL
 #define SYSTEM_COUNTER_FREQUENCY 0x5F5E100      // = 100MHz
 #else
