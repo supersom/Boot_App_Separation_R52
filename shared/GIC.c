@@ -70,7 +70,8 @@ void GIC_enable_SPI(uint32_t INTn, uint32_t pri, uint32_t fiq, uint32_t edge_tri
 
 	// Route INT to CPU at aff2.aff1.aff0
 //	GICD.IROUTER[INTn+32]    = 0x00FFFFFF && aff[0] && (aff[1] << 8) && (aff[2] << 16);
-	GICD.IROUTER[INTn+32] = 0x00FFFFFF && ((aff[0]) | (aff[1] << 8) | (aff[2] << 16));
+	// GICD.IROUTER[INTn+32] = 0x00FFFFFF && ((aff[0]) | (aff[1] << 8) | (aff[2] << 16));
+	GICD.IROUTER[INTn+32] = 0x00FFFFFF & (aff[0] | (aff[1] << 8) | (aff[2] << 16));
 	GICD.ISENABLER[1]       |= 0x1 << INTn;     // enable interrupt (first 32 SPIs configured in this register)
 	printf("SPI: %d enabled on core: %d.%d.%d as %s with priority: %d\n", INTn, aff[2], aff[1], aff[0], fiq?"FIQ":"IRQ", pri);
 }
@@ -97,9 +98,9 @@ void GIC_enable_SGI_PPI(uint32_t INTn, uint32_t pri, uint32_t fiq, uint32_t core
 		else {
 			uint32_t PPI_trigger = 1;
 			if(PPI_trigger == 1)
-				GICR_SGI_C01.ICFGR[1] |= 0x2 << (2*INTn);    	// PPI edge sensitive
+				GICR_SGI_C01.ICFGR[1] |= 0x2 << (2*(INTn-16));    	// PPI edge sensitive
 			else
-				GICR_SGI_C01.ICFGR[1] &= ~(0x2 << (2*INTn));	// PPI level sensitive
+				GICR_SGI_C01.ICFGR[1] &= ~(0x2 << (2*(INTn-16)));	// PPI level sensitive
 		}
 		GICR_SGI_C01.ISENABLER0 |= (0x1 << INTn);   // Enable SGI/PPI
 	}
@@ -115,9 +116,9 @@ void GIC_enable_SGI_PPI(uint32_t INTn, uint32_t pri, uint32_t fiq, uint32_t core
 		else {
 			uint32_t PPI_trigger = 1;
 			if(PPI_trigger == 1)
-				GICR_SGI.ICFGR[1] |= 0x2 << (2*INTn);    	// PPI edge sensitive
+				GICR_SGI.ICFGR[1] |= 0x2 << (2*(INTn-16));    	// PPI edge sensitive
 			else
-				GICR_SGI.ICFGR[1] &= ~(0x2 << (2*INTn));	// PPI level sensitive
+				GICR_SGI.ICFGR[1] &= ~(0x2 << (2*(INTn-16)));	// PPI level sensitive
 		}
 		GICR_SGI.ISENABLER0 |= (0x1 << INTn);   // Enable SGI/PPI
 	}
