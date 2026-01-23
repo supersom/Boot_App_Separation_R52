@@ -10,6 +10,12 @@
 set -e # Exit immediately if a command exits with a non-zero status.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Ensure Arm Compiler 6 tools are on PATH for armlink/armclang.
+ARMCOMPILER_BIN="/opt/arm/developmentstudio-2025.0-1/sw/ARMCompiler6.24/bin"
+if ! command -v armlink >/dev/null 2>&1; then
+    export PATH="$ARMCOMPILER_BIN:$PATH"
+fi
+
 # --- CONFIGURATION ---
 # List all project subdirectories.
 # The LAST project in this list is passed last to the FVP, setting the entry point.
