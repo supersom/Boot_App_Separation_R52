@@ -14,6 +14,7 @@
 // void app_entry(void);
 extern void app_bootloader(void);
 
+#if 0  // startup.S already emits __app_vector_table in .app_vector_table
 // Define the stack top. This should align with the scatter file.
 // RW_APP starts at 0x30020000 and is 0x8000 bytes long.
 #define STACK_TOP 0x20028000
@@ -24,6 +25,7 @@ __attribute__((section(".app_vector_table"), used))
 const volatile uint32_t app_vector_table[] = {
     STACK_TOP,
     (uint32_t)app_bootloader};
+#endif
 
 // __attribute__ ((section("BOOT_ARGS"), used))
 // volatile boot_args_t* boot_args = (boot_args_t*)BOOT_ARGS_ADDR;
@@ -52,6 +54,7 @@ void DualTimer0INThandler(void);
 void DualTimer1INThandler(void);
 // void SGI0IRQHandler(void);
 
+__attribute__((section("c01_app"), used))
 // Approximate sleep - highly dependent on CPU clock speed
 void sleep_busy_wait(unsigned int iterations)
 {
@@ -64,8 +67,7 @@ void sleep_busy_wait(unsigned int iterations)
 }
 
 // Application entry point.
-// __attribute__((used))
-// void app_entry(void)
+__attribute__((section("c01_main"), used))
 int main(void)
 {
     uint32_t mpidr;
@@ -78,12 +80,12 @@ int main(void)
     spinlock_printf("\n[%s] core_id=%u\n", "app_core1", (unsigned)core_id);
 
 #ifdef __ARM_FP
-    spinlock_printf("Floating point calculation using the FPU...\n");
+    spinlock_printf("C01: Floating point calculation using the FPU...\n");
 #else
-    spinlock_printf("Floating point calculation using the software floating point library (no FPU)...\n");
+    spinlock_printf("C01: Floating point calculation using the software floating point library (no FPU)...\n");
 #endif
-    spinlock_printf("Float result is        %f\n", calculate(1.5f, 2.5f));
-    spinlock_printf("Float result should be 0.937500\n");
+    spinlock_printf("C01: Float result is        %f\n", calculate(1.5f, 2.5f));
+    spinlock_printf("C01: Float result should be 0.937500\n");
 
     enableSystemCounter();
     waitForEnableSystemCounter();
@@ -124,15 +126,16 @@ int main(void)
     while (1)
     {
         counter++;
-        uint32_t hppir, rpr;
-        __asm volatile("MRC p15, 0, %0, c12, c8, 0" : "=r"(hppir)); // ICC_HPPIR0
-        __asm volatile("MRC p15, 0, %0, c12, c11, 3" : "=r"(rpr));  // ICC_RPR
-        spinlock_printf("\nC01: HPPIR0=0x%x RPR=0x%x\n", hppir, rpr);
-        spinlock_printf("C01: CNTPCT @ %u: %llu\n", counter, getCNTPCT());
+        // uint32_t hppir, rpr;
+        // __asm volatile("MRC p15, 0, %0, c12, c8, 0" : "=r"(hppir)); // ICC_HPPIR0
+        // __asm volatile("MRC p15, 0, %0, c12, c11, 3" : "=r"(rpr));  // ICC_RPR
+        // spinlock_printf("\nC01: HPPIR0=0x%x RPR=0x%x\n", hppir, rpr);
+        // spinlock_printf("C01: CNTPCT @ %u: %llu\n", counter, getCNTPCT());
         sleep_busy_wait(10000000);
     }
 }
 
+__attribute__((section("c01_app"), used))
 static float calculate(float a, float b)
 {
     float temp1 = a + b;
@@ -141,6 +144,7 @@ static float calculate(float a, float b)
     return temp2 / temp1;
 }
 
+__attribute__((section("c01_app"), used))
 static void enableSystemCounter(void)
 {
     volatile uint32_t *cntcr = (volatile uint32_t *)CNTCONTROLBASE;
@@ -148,6 +152,7 @@ static void enableSystemCounter(void)
     *cntcr |= 0x7;
 }
 
+__attribute__((section("c01_app"), used))
 // Busy-wait until the system counter acknowledges enable.
 // CNTCR bit0 (ENABLE) goes high once the counter is running.
 static void waitForEnableSystemCounter(void)
@@ -158,6 +163,7 @@ static void waitForEnableSystemCounter(void)
     }
 }
 
+__attribute__((section("c01_app"), used))
 static void enableDualTimer0(unsigned int period)
 {
     DT_SP804.Timer1Control = 0x0;
@@ -169,6 +175,7 @@ static void enableDualTimer0(unsigned int period)
     spinlock_printf("C01: Timer1RIS = 0x%x\n", DT_SP804.Timer1RIS & 0x1);
 }
 
+__attribute__((section("c01_app"), used))
 static void enableDualTimer1(unsigned int period)
 {
     DT_SP804_2.Timer1Control = 0x0;
@@ -180,6 +187,7 @@ static void enableDualTimer1(unsigned int period)
     spinlock_printf("C01: Timer2RIS = 0x%x\n", DT_SP804_2.Timer1RIS & 0x1);
 }
 
+__attribute__((section("c01_app"), used))
 void virtualTimerIRQhandler(void)
 {
     // spinlock_printf("VT!\n");
@@ -197,6 +205,7 @@ void virtualTimerIRQhandler(void)
 // //        aff2, aff1, aff0);
 // }
 
+__attribute__((section("c01_app"), used))
 void SGI1IRQhandler(void)
 {
     static uint32_t Seconds;
@@ -265,6 +274,7 @@ void SGI1IRQhandler(void)
         ms++;
 }
 
+__attribute__((section("c01_app"), used))
 void DualTimer0INThandler(void)
 {
     if (GICD.IGROUPR[1])
@@ -274,6 +284,7 @@ void DualTimer0INThandler(void)
     DT_SP804.Timer1IntClr = 0x0; // Clear timer interrupt
 }
 
+__attribute__((section("c01_app"), used))
 void DualTimer1INThandler(void)
 {
     if (GICD.IGROUPR[1])

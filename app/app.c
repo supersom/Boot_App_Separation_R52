@@ -1,4 +1,4 @@
-// app.c – second ELF, linked at 0x00800000
+// app.c – second ELF, linked at 0x00040000
 
 #include <stdint.h>
 #include <stdio.h>
@@ -14,6 +14,7 @@
 // void app_entry(void);
 extern void app_bootloader(void);
 
+#if 0  // startup.S already provides __app_vector_table in .app_vector_table
 // Define the stack top. This should align with the scatter file.
 // RW_APP starts at 0x30010000 and is 0x8000 bytes long.
 #define STACK_TOP 0x20018000
@@ -25,6 +26,7 @@ const volatile uint32_t app_vector_table[] = {
     STACK_TOP,
     (uint32_t) app_bootloader
 };
+#endif
 
 // __attribute__ ((section("BOOT_ARGS"), used))
 // volatile boot_args_t* boot_args = (boot_args_t*)BOOT_ARGS_ADDR;
@@ -47,6 +49,7 @@ void DualTimer0INThandler(void);
 void DualTimer1INThandler(void);
 // void SGI0IRQHandler(void);
 
+__attribute__((section("c00_app"), used))
 // Approximate sleep - highly dependent on CPU clock speed
 void sleep_busy_wait(unsigned int iterations) {
     volatile unsigned int i;
@@ -56,8 +59,8 @@ void sleep_busy_wait(unsigned int iterations) {
     }
 }
 
-// // Application entry point.
-// // __attribute__((used))
+// Application entry point.
+__attribute__((section("c00_main"), used))
 int main(void)
 {
     uint32_t mpidr;
@@ -67,15 +70,15 @@ int main(void)
     __asm volatile("MRC p15, 0, %0, c0, c0, 5" : "=r"(mpidr));
     uint32_t core_id = mpidr & 0xFF;
 
-    spinlock_printf("\n[%s] core_id=%u\n", "app_core1", (unsigned)core_id);
+    spinlock_printf("\n[%s] core_id=%u\n", "app", (unsigned)core_id);
 
 #ifdef __ARM_FP
-    spinlock_printf("Floating point calculation using the FPU...\n");
+    spinlock_printf("C00: Floating point calculation using the FPU...\n");
 #else
-    spinlock_printf("Floating point calculation using the software floating point library (no FPU)...\n");
+    spinlock_printf("C00: Floating point calculation using the software floating point library (no FPU)...\n");
 #endif
-    spinlock_printf("Float result is        %f\n", calculate(1.5f, 2.5f));
-    spinlock_printf("Float result should be 0.937500\n");
+    spinlock_printf("C00: Float result is        %f\n", calculate(1.5f, 2.5f));
+    spinlock_printf("C00: Float result should be 0.937500\n");
 
     enableSystemCounter();
     waitForEnableSystemCounter();
@@ -116,11 +119,11 @@ int main(void)
     while (1)
     {
         counter++;
-        uint32_t hppir, rpr;
-        __asm volatile("MRC p15, 0, %0, c12, c8, 0" : "=r"(hppir)); // ICC_HPPIR0
-        __asm volatile("MRC p15, 0, %0, c12, c11, 3" : "=r"(rpr));  // ICC_RPR
-        spinlock_printf("\nC00: HPPIR0=0x%x RPR=0x%x\n", hppir, rpr);
-        spinlock_printf("C00: CNTPCT @ %u: %llu\n", counter, getCNTPCT());
+        // uint32_t hppir, rpr;
+        // __asm volatile("MRC p15, 0, %0, c12, c8, 0" : "=r"(hppir)); // ICC_HPPIR0
+        // __asm volatile("MRC p15, 0, %0, c12, c11, 3" : "=r"(rpr));  // ICC_RPR
+        // spinlock_printf("\nC00: HPPIR0=0x%x RPR=0x%x\n", hppir, rpr);
+        // spinlock_printf("C00: CNTPCT @ %u: %llu\n", counter, getCNTPCT());
         sleep_busy_wait(10000000);
     }
 }
