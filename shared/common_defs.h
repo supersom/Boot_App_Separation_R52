@@ -76,6 +76,141 @@
 #define CPU_ID_01   0x1
 #define CPU_ID_10   0x2
 #define CPU_ID_11   0x3
+
+// Build-time core selector (set per-app to keep startup/bootloader parametric).
+#ifndef APP_CORE_ID
+#define APP_CORE_ID CPU_ID_00
+#endif
+
+#if APP_CORE_ID == CPU_ID_00
+#define APP_ATCM_BASE Image$$ATCM_C00$$Base
+#define APP_ATCM_LOAD Load$$ATCM_C00$$Base
+#define APP_ATCM_LEN Image$$ATCM_C00$$Length
+#define APP_BTCM_BASE Image$$BTCM_C00$$Base
+#define APP_BTCM_LOAD Load$$BTCM_C00$$Base
+#define APP_BTCM_LEN Image$$BTCM_C00$$Length
+#define APP_CTCM_BASE Image$$CTCM_C00$$Base
+#define APP_CTCM_LOAD Load$$CTCM_C00$$Base
+#define APP_CTCM_LEN Image$$CTCM_C00$$Length
+#elif APP_CORE_ID == CPU_ID_01
+#define APP_ATCM_BASE Image$$ATCM_C01$$Base
+#define APP_ATCM_LOAD Load$$ATCM_C01$$Base
+#define APP_ATCM_LEN Image$$ATCM_C01$$Length
+#define APP_BTCM_BASE Image$$BTCM_C01$$Base
+#define APP_BTCM_LOAD Load$$BTCM_C01$$Base
+#define APP_BTCM_LEN Image$$BTCM_C01$$Length
+#define APP_CTCM_BASE Image$$CTCM_C01$$Base
+#define APP_CTCM_LOAD Load$$CTCM_C01$$Base
+#define APP_CTCM_LEN Image$$CTCM_C01$$Length
+#elif APP_CORE_ID == CPU_ID_10
+#define APP_ATCM_BASE Image$$ATCM_C10$$Base
+#define APP_ATCM_LOAD Load$$ATCM_C10$$Base
+#define APP_ATCM_LEN Image$$ATCM_C10$$Length
+#define APP_BTCM_BASE Image$$BTCM_C10$$Base
+#define APP_BTCM_LOAD Load$$BTCM_C10$$Base
+#define APP_BTCM_LEN Image$$BTCM_C10$$Length
+#define APP_CTCM_BASE Image$$CTCM_C10$$Base
+#define APP_CTCM_LOAD Load$$CTCM_C10$$Base
+#define APP_CTCM_LEN Image$$CTCM_C10$$Length
+#elif APP_CORE_ID == CPU_ID_11
+#define APP_ATCM_BASE Image$$ATCM_C11$$Base
+#define APP_ATCM_LOAD Load$$ATCM_C11$$Base
+#define APP_ATCM_LEN Image$$ATCM_C11$$Length
+#define APP_BTCM_BASE Image$$BTCM_C11$$Base
+#define APP_BTCM_LOAD Load$$BTCM_C11$$Base
+#define APP_BTCM_LEN Image$$BTCM_C11$$Length
+#define APP_CTCM_BASE Image$$CTCM_C11$$Base
+#define APP_CTCM_LOAD Load$$CTCM_C11$$Base
+#define APP_CTCM_LEN Image$$CTCM_C11$$Length
+#else
+#error "Unsupported APP_CORE_ID"
+#endif
+
+#ifndef APP_TCM_SIZE
+#define APP_TCM_SIZE 0x00020000
+#endif
+#define APP_ATCM_LIMIT (APP_ATCM_BASE + APP_TCM_SIZE)
+#define APP_BTCM_LIMIT (APP_BTCM_BASE + APP_TCM_SIZE)
+#define APP_CTCM_LIMIT (APP_CTCM_BASE + APP_TCM_SIZE)
+
+// #if APP_CORE_ID == CPU_ID_00
+// #define APP_EL1_VECTORS EL1_Vectors_C00
+// #define APP_EL1_RESET_HANDLER EL1_Reset_Handler_C00
+// #elif APP_CORE_ID == CPU_ID_01
+// #define APP_EL1_VECTORS EL1_Vectors_C01
+// #define APP_EL1_RESET_HANDLER EL1_Reset_Handler_C01
+// #elif APP_CORE_ID == CPU_ID_10
+// #define APP_EL1_VECTORS EL1_Vectors_C10
+// #define APP_EL1_RESET_HANDLER EL1_Reset_Handler_C10
+// #elif APP_CORE_ID == CPU_ID_11
+// #define APP_EL1_VECTORS EL1_Vectors_C11
+// #define APP_EL1_RESET_HANDLER EL1_Reset_Handler_C11
+// #endif
+#if APP_CORE_ID == CPU_ID_00
+#define APP_EL1_VECTORS el1_vector_table //EL1_Vectors
+#define APP_EL1_RESET_HANDLER el1_vector_reset //EL1_Reset_Handler
+#elif APP_CORE_ID == CPU_ID_01
+#define APP_EL1_VECTORS el1_vector_table //EL1_Vectors
+#define APP_EL1_RESET_HANDLER el1_vector_reset //EL1_Reset_Handler
+#elif APP_CORE_ID == CPU_ID_10
+#define APP_EL1_VECTORS el1_vector_table //EL1_Vectors
+#define APP_EL1_RESET_HANDLER el1_vector_reset //EL1_Reset_Handler
+#elif APP_CORE_ID == CPU_ID_11
+#define APP_EL1_VECTORS el1_vector_table //EL1_Vectors
+#define APP_EL1_RESET_HANDLER el1_vector_reset //EL1_Reset_Handler
+#endif
+
+#if APP_CORE_ID == CPU_ID_00
+#define APP_STACK_TOP __stack_top_c00
+#elif APP_CORE_ID == CPU_ID_01
+#define APP_STACK_TOP __stack_top_c01
+#elif APP_CORE_ID == CPU_ID_10
+#define APP_STACK_TOP __stack_top_c10
+#elif APP_CORE_ID == CPU_ID_11
+#define APP_STACK_TOP __stack_top_c11
+#endif
+
+// // Provide default heap/stack base symbols when scatter exports are absent
+// #ifndef __heap_base_com
+// #define __heap_base_com 0x20010000
+// #endif
+// #ifndef __heap_limit_com
+// #define __heap_limit_com 0x20014000
+// #endif
+
+// #ifndef __stack_base_c00
+// #define __stack_base_c00 0x20014000
+// #endif
+// #ifndef __stack_base_c01
+// #define __stack_base_c01 0x20024000
+// #endif
+// #ifndef __stack_base_c10
+// #define __stack_base_c10 0x20034000
+// #endif
+// #ifndef __stack_base_c11
+// #define __stack_base_c11 0x20044000
+// #endif
+
+// // Stack top defaults (in case linker symbols are absent during early bring-up)
+// #ifndef __stack_top_c00
+// #define __stack_top_c00 0x20018000
+// #endif
+// #ifndef __stack_top_c01
+// #define __stack_top_c01 0x20028000
+// #endif
+// #ifndef __stack_top_c10
+// #define __stack_top_c10 0x20038000
+// #endif
+// #ifndef __stack_top_c11
+// #define __stack_top_c11 0x20048000
+// #endif
+
+// App ELF base addresses (CTCM regions per core)
+#define APP_BASE_C00 0x03000000
+#define APP_BASE_C01 0x07000000
+#define APP_BASE_C10 0x0B000000
+#define APP_BASE_C11 0x0F000000
+
 //----------------------------------------------------------------
 
 #define    MB             1048576                         	// One megabyte
