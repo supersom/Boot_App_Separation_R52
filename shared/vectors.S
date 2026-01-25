@@ -1,6 +1,7 @@
 #include "common_defs.h"
 
-    .section .text.el1_vectors, "ax"
+    ; .section .text.el1_vectors, "ax"
+    .section EL1_VECTORS, "ax"
     .global el1_vector_table
     .align 5
 el1_vector_table:
@@ -13,8 +14,11 @@ el1_vector_table:
     b el1_vector_irq
     b el1_vector_fiq
 
+    .global el1_vector_reset
 el1_vector_reset:
-    b el1_vector_reset
+//    b el1_vector_reset
+    LDR PC, =SSBL_common
+
 el1_vector_undef:
     b el1_vector_undef
 el1_vector_svc:
@@ -47,14 +51,14 @@ el1_vector_hyp:
 el1_default_handler:
     b el1_default_handler
 
-    .extern readIntAck
-    .extern writeEOI
-    .extern GICIsrVectorTable
+    .extern readIntAck_C00
+    .extern writeEOI_C00
+    .extern GICIsrVectorTable_C00
 
 el1_vector_fiq:
 .if 0
     push {r0-r3, r12, lr}
-    bl readIntAck
+    bl readIntAck_C00
     mov r1, r0
     ldr r4, =0x3FF
     and r0, r0, r4
@@ -62,7 +66,7 @@ el1_vector_fiq:
     ldr r3, [r2, r0, lsl #2]
     blx r3
     mov r0, r1
-    bl writeEOI
+    bl writeEOI_C00
     pop {r0-r3, r12, lr}
     subs pc, lr, #4
 .else
@@ -71,7 +75,7 @@ el1_vector_fiq:
 	and r1, sp, #4						// Check if the sp is 8-byte aligned, if not r1 = 4. AAPCS mandates 8-byte alignment at all external boundaries (i.e. separately compiled or assembled files).
 	sub sp, sp, r1						// Sub 0 (already aligned) or 4 (misaligned)
 	push {r1}							// Push r1 (adjustment info) and lr_HYP onto the stack. lr_HYP is used in the subroutine call, so it must be stacked (here) and restored (before returning).
-	bl readIntAck					// r0 will contain the FIQ source number, source identified, interrupt active
+	bl readIntAck_C00					// r0 will contain the FIQ source number, source identified, interrupt active
 1:	mov r4, r0							// Use r4 to store the FIQ source number, to be used later
 	cpsie f								// Re-enable interrupts (FIQ)
 	//TODO: optimize by branch-and-link to the ISR directly, without IVT addr calc
@@ -80,8 +84,8 @@ el1_vector_fiq:
 	blx r1								// Branch to the C Interrupt Service Routine
 	cpsid f								// Disable interrupts (FIQ)
 	mov r0, r4							// Move FIQ source number (stored in r4) to r0
-	bl writeEOI						// Write r0 to ICC_EOIR: End of interrupt, priority drop and deactivation
-	bl readIntAck					// Before restoring the context, check if any other interrupt is pending
+	bl writeEOI_C00						// Write r0 to ICC_EOIR: End of interrupt, priority drop and deactivation
+	bl readIntAck_C00					// Before restoring the context, check if any other interrupt is pending
 	mov r1, #SPURIOUSID					// 1023: spurious interrupt, meaning no interrupt pending
 	cmp r0, r1							// Compare with what was read
 	bne 1b								// If there is another interrupt pending, handle it
@@ -116,17 +120,17 @@ el1_vector_irq:
 	and r1, sp, #4						// Check if the sp is 8-byte aligned, if not r1 = 4. AAPCS mandates 8-byte alignment at all external boundaries (i.e. separately compiled or assembled files).
 	sub sp, sp, r1						// Sub 0 (already aligned) or 4 (misaligned)
 	push {r1}							// Push r1 (adjustment info) and lr_HYP onto the stack. lr_HYP is used in the subroutine call, so it must be stacked (here) and restored (before returning).
-	bl readAliasedIntAck					// r0 will contain the FIQ source number, source identified, interrupt active
+	bl readAliasedIntAck_C00					// r0 will contain the FIQ source number, source identified, interrupt active
 1:	mov r4, r0							// Use r4 to store the FIQ source number, to be used later
 	cpsie f								// Re-enable interrupts (FIQ)
 	//TODO: optimize by branch-and-link to the ISR directly, without IVT addr calc
-	ldr r1, =GICIsrVectorTable_COM		// Load in r1 base of the FIQ vector table
+	ldr r1, =GICIsrVectorTable		// Load in r1 base of the FIQ vector table
 	ldr r1, [r1, r0, lsl #2]			// Load in r1 = r1 + r0*4. Multiply by 4: offset from the base of the vector table
 	blx r1								// Branch to the C Interrupt Service Routine
 	cpsid f								// Disable interrupts (FIQ)
 	mov r0, r4							// Move FIQ source number (stored in r4) to r0
-	bl writeAliasedEOI						// Write r0 to ICC_EOIR: End of interrupt, priority drop and deactivation
-	bl readAliasedIntAck					// Before restoring the context, check if any other interrupt is pending
+	bl writeAliasedEOI_C00						// Write r0 to ICC_EOIR: End of interrupt, priority drop and deactivation
+	bl readAliasedIntAck_C00					// Before restoring the context, check if any other interrupt is pending
 	mov r1, #SPURIOUSID					// 1023: spurious interrupt, meaning no interrupt pending
 	cmp r0, r1							// Compare with what was read
 	bne 1b								// If there is another interrupt pending, handle it

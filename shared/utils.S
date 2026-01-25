@@ -809,9 +809,9 @@ Copy_Vectors_ROM_to_TCM:
 @        -----------------------------------------------
 @         1. Define source/destination/length
 @        -----------------------------------------------
-        LDR     r0, =Load$$ATCM$$Base    // src (ROM)
-        LDR     r1, =Image$$ATCM$$Base   // dst (TCM)
-        LDR     r2, =Image$$ATCM$$Length // total bytes
+        LDR     r0, =APP_ATCM_LOAD       // src (ROM)
+        LDR     r1, =APP_ATCM_BASE       // dst (TCM)
+        LDR     r2, =APP_ATCM_LEN        // total bytes
 CopyLoopVec:
         LDR     r3, [r0], #4
         STR     r3, [r1], #4
@@ -821,7 +821,7 @@ CopyLoopVec:
 @        -----------------------------------------------
 @         2. Set VBAR_EL1 to new vector table in TCM
 @        -----------------------------------------------
-        LDR     r0, =Image$$ATCM$$Base // new vector base in TCM
+        LDR     r0, =APP_ATCM_BASE // new vector base in TCM
         MCR     p15, 4, r0, c12, c0, 0 // write VBAR
 
         DSB
@@ -860,7 +860,7 @@ CopyLoop:
 @        -----------------------------------------------
 @         2. Set VBAR_EL1 to new vector table in TCM
 @        -----------------------------------------------
-@        LDR     r0, =Image$$ATCM$$Base // new vector base in TCM
+@        LDR     r0, =APP_ATCM_BASE // new vector base in TCM
 @        MCR     p15, 4, r0, c12, c0, 0 // write VBAR
 
     .global lock
