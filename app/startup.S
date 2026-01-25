@@ -1,7 +1,15 @@
+#include "common_defs.h"
+
     .syntax unified
     .arm
+#ifdef __THUMB__
+    .thumb
+#endif
     .eabi_attribute 25, 1
 
+@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@
+.if 0
     .section .text.bootloader, "ax"
 
     .global app_bootloader
@@ -16,3 +24,14 @@ app_bootloader:
     // Switch to SVC via shared routine; pass setup stack address in r0.
     ldr r0, =setup_stack_primary
     b switch_to_svc_common
+.endif
+@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@
+
+    .section .app_vector_table, "a"
+    .align 2
+    .global __app_vector_table 
+__app_vector_table:
+    .word APP_STACK_TOP
+    .word EL2_Vectors
+
