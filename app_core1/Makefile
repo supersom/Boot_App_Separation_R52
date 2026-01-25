@@ -18,6 +18,10 @@ CFLAGS       = -g -c $(TARGET_ARCH) -I../shared
 ASFLAGS      = -g -c $(TARGET_MACH) -I../shared
 LDFLAGS      = --cpu=Cortex-R52 --map --symbols --list=$(MAP_OUT) --library_type=microlib
 
+# Per-core compile-time defines (core 1)
+CFLAGS      += -DAPP_CORE_ID=1
+ASFLAGS     += -DAPP_CORE_ID=1
+
 # Auto-discover sources and create object list
 SRCS_C = $(wildcard *.c)
 SRCS_S = $(wildcard *.S)
@@ -36,7 +40,7 @@ all: $(ELF_OUT)
 
 # Rule to link the final ELF
 $(ELF_OUT): $(OBJS)
-	$(LD) $(LDFLAGS) --scatter=$(TARGET_NAME).scat --entry=app_bootloader -o $@ $(OBJS)
+	$(LD) $(LDFLAGS) --scatter=$(TARGET_NAME).scat --entry=EL2_Vectors -o $@ $(OBJS)
 
 # Pattern rule to compile C source
 $(OBJDIR)/%.o: %.c
