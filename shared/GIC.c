@@ -165,6 +165,7 @@ void unhandled (void) {
     while (1){};
 }
 
+__attribute__((section("boot_com"), used))
 void SGI0IRQHandler()
 {
 	uint32_t aff0 = 0;
