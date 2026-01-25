@@ -1,28 +1,196 @@
-; boot.scat – boot image at 0x00000000
+;*
+;* bootloader.S
+;*
+;*  Created on: Nov 11, 2025
+;*
+;*  Description: Scatter-file for bare-metal bootup & applications on MANAS
+;*      This file has addresses suitable for targets with: 
+;*			ROM at 0x0 -> all code and pre-initialized data starts here
+;*				CODE at 0x0, size 0x20000 -> shared RO memory (Boot ROM)
+;*				DATA at 0x00400000, size 0x20000 -> shared RW memory (SRAM)
+;*				TCMs for core 00 at 
+;*					0x01000000 (0x20000), 
+;*					0x02000000 (0x20000) & 
+;*					0x03000000 (0x20000)
+;*				TCMs for core 01 at 
+;*					0x05000000 (0x20000), 
+;*					0x06000000 (0x20000) & 
+;*					0x07000000 (0x20000)
+;*				TCMs for core 10 at 
+;*					0x09000000 (0x20000), 
+;*					0x0A000000 (0x20000) & 
+;*					0x0B000000 (0x20000)
+;*				TCMs for core 11 at 
+;*					0x0D000000 (0x20000), 
+;*					0x0E000000 (0x20000) & 
+;*					0x0F000000 (0x20000)
+;*
+;*
+;*  Copyright (c) C2i Semiconductors.
+;*  All rights reserved. This file is part of proprietary firmware and
+;*  internal development at C2i Semiconductors. Unauthorized copying,
+;*  redistribution, or use of this file in source or binary forms, with or
+;*  without modification, is strictly prohibited unless explicit written
+;*  permission is granted by C2i Semiconductors.
+;*
+;* ---------------------------------------------------------------------------*/
 
-LR_BOOT 0x00000000 0x00010000   ; 64 KB boot ROM
+
+LOAD 0x0
 {
-    ER_BOOT   0x00000000 0x00010000
+    CODE +0 0x20000
+    {	; This section contains code/data that has to be in: 
+		; 	ROM, if they are used before flash can be programmed or, 
+		; 	ROM/FLASH, if they are used before TCM copy can happen  
+        ;startup.o (EL2_VECTORS, +First)    ; EL2 Vector tables and reset handlers. Has to be in the ROM
+		;startup.o (PRIMARY_BOOT)			; Boot init for primary core. Has to be in the ROM.
+		;startup.o (SECONDARY_BOOT)			; Boot init for secondary core. Has to be in the ROM.
+		;bootloader.o (FSBL)					; First-stage bootloader. Has to be in a root section - ROM/FLASH. 
+		;bootloader.o (SSBL)					; Second-stage bootloader. Has to be in a root section - ROM/FLASH.  
+		;v8rgicv3cpuif.o (v8rgicv3cpuif_com)	; common routines of GICv3 CPU i/f driver. Has to be in a root section - ROM/FLASH.
+		;GICIsrVectorTable.o (COM_GICIsrVectorTable)	; common ISR vector table. Has to be in a root section - ROM/FLASH.
+		;* (boot_com)
+         * (InRoot$$Sections)               ; All library sections that must be in a root region
+         * (+RO)                        	; Application code, including C library
+    }
+ 
+	LIB_CODE +0
+	{
+		lib*.o                           ; Place lib code execution from rom
+		_*.o
+		rt*.o
+		exit.o
+		;sys_exit.o
+		;anon$$obj.o
+		;*(.ARM.Collect$$lib*)
+		;*(Veneer$$Code)
+	}
+
+	DATA_UNINIT 0x00400100 UNINIT 0x01F00
+	{
+		*_utils.o (FLAGS)
+		*_utils.o (VARS)
+	}
+
+    DATA 0x00402000 0x08000
     {
-        * (RESET, +First)
-        .ANY (+RO)
+    	* (+RW,+ZI)                         ; All RW and ZI Data            
+    }
+	
+	HEAP 0x00410000 0x10000
+	{
+		; *_stackheap.o (heap)		
+	}
+	;--------------------------------------------
+	; TCMs for cluster 0, core 0 (C00) 
+	;--------------------------------------------
+	;; ATCM is for .text i.e. code and stack as it is initialized very early:
+    ATCM_C00 0x01000000 0x8000
+    {
+        ; *_vectors.o (EL1_VECTORS, +First)         	; EL1 Vector tables and reset handlers
+    }
+    ; ATCM_C00_APP 0x01008000 0x10000
+    ; {
+		; v8rgicv3cpuif.o (v8rgicv3cpuif_c00)	; Core 0 specific routines of GICv3 CPU i/f driver
+		; GIC.o
+		; generictimer.o  
+    ; }
+    ATCM_C00_STACK 0x01018000 0x8000
+    {
+    }
+    
+    ;BTCM is for .data and .bss (ZI) 
+    BTCM_C00 0x02000000 0x20000 			
+    {
+    }
+    ; CTCM is for overflow and application code/data
+    CTCM_C00 0x03000000 0x20000					
+    {
+    	; App ELF owns CTCM_C00
     }
 
-    SHARED_RW   0x00400000 0x1000
+	;--------------------------------------------
+	; TCMs for cluster 0, core 1 (C01) 
+	;--------------------------------------------
+	; ATCM is for .text i.e. code and stack as it is initialized very early:
+    ATCM_C01 0x05000000 0x8000 
     {
-        * (BOOT_ARGS)
+        ; *_vectors.o (EL1_VECTORS, +First)         	; EL1 Vector tables and reset handlers
+    }
+    ; ATCM_C01_APP 0x05008000 0x10000
+    ; {
+		; v8rgicv3cpuif.o (v8rgicv3cpuif_c01)	; Core 01 specific routines of GICv3 CPU i/f driver
+		; GIC.o
+		; generictimer.o  
+    ; }
+    ATCM_C01_STACK 0x05018000 0x8000
+    {
+    }
+    
+    ;BTCM is for .data and .bss (ZI) 
+    BTCM_C01 0x06000000 NOCOMPRESS 0x20000
+    {
+    }
+    ; CTCM is for overflow and application code/data
+    CTCM_C01 0x07000000 0x20000					
+    {
+    	; App ELF owns CTCM_C01
     }
 
-    RW_BOOT   0x30000000 0x00008000  ; 32KB RAM
+	;--------------------------------------------
+	; TCMs for cluster 1, core 0 (C10) 
+	;--------------------------------------------
+	; ATCM is for .text i.e. code and stack as it is initialized very early:
+    ATCM_C10 0x09000000 0x20000 
     {
-        .ANY (+RW,+ZI)
+    }
+    ;BTCM is for .data and .bss (ZI) 
+    BTCM_C10 0x0A000000 NOCOMPRESS 0x20000
+    {
+    }
+    ; CTCM is for overflow and application code/data
+    CTCM_C10 0x0B000000 0x20000					
+    {
+    	; App ELF owns CTCM_C10
     }
 
-    ARM_LIB_HEAP 0x20000000 EMPTY 0x00004000 ; 16KB Heap
+	;--------------------------------------------
+	; TCMs for cluster 1, core 1 (C11) 
+	;--------------------------------------------
+	; ATCM is for .text i.e. code and stack as it is initialized very early:
+    ATCM_C11 0x0D000000 0x20000 
     {
     }
-
-    ARM_LIB_STACK 0x20008000 EMPTY -0x00004000 ; 16KB Stack
+    ;BTCM is for .data and .bss (ZI) 
+    BTCM_C11 0x0E000000 NOCOMPRESS 0x20000
     {
     }
+    ; CTCM is for overflow and application code/data
+    CTCM_C11 0x0F000000 0x20000					
+    {
+    	; App ELF owns CTCM_C11
+    }
+; Scatterloading can be used to copy code and/or data into the TCMs
 }
+
+;LOAD_PERIPHERALS +0 ;0x10000000
+;{
+    
+    ;PERIPHERALS 0X10000000 EMPTY 0XAFFFFFC0
+    ;PERIPHERALS 0XAA000000 EMPTY 0X05FFFFC0
+    ;{
+    ;}
+
+    ;PERIPHERALS2 0X9A000000 EMPTY 0X05FFFFC0
+    ;{
+    ;}
+
+    ;GEN_TIMERS 0XAA000000 EMPTY 0X05000000
+    ;{
+    ;}
+
+    ;GIC 0XAF000000 EMPTY 0X00FFFFC0
+    ;{
+    ;}
+
+;}
