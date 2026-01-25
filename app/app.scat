@@ -1,42 +1,80 @@
-; app.scat – application image at 0x00020000
+; app_c00.scat – application image for app_c00
 
-LR_APP 0x00020000 0x00010000   ; 64 KB app region
+LOAD 0x00020000 0x00020000
 {
-    ER_APP   0x00020000 0x00010000
+	CODE +0 0x20000
+	{
+        * (.app_vector_table, +First)
+        * (.Reset_Handler)
+        ; startup.o (EL2_VECTORS)             ; EL2 Vector tables and reset handlers. Has to be in the ROM
+		*_bootloader.o (PRIMARY_BOOT)			; Boot init for primary core. Has to be in the ROM.
+		*_bootloader.o (SECONDARY_BOOT)			; Boot init for secondary core. Has to be in the ROM.
+		*_bootloader.o (FSBL)					; First-stage bootloader. Has to be in a root section - ROM/FLASH. 
+		*_bootloader.o (SSBL)					; Second-stage bootloader. Has to be in a root section - ROM/FLASH.  
+		*_v8rgicv3cpuif.o (v8rgicv3cpuif_com)	; common routines of GICv3 CPU i/f driver. Has to be in a root section - ROM/FLASH.
+		*_GICIsrVectorTable.o (COM_GICIsrVectorTable)	; common ISR vector table. Has to be in a root section - ROM/FLASH.
+		* (boot_com)
+        * (UTILS)
+        *_initialization.o
+        *_GICv3.o
+        *_mpu.o
+		lib*.o                           ; Place lib code execution from rom
+		_*.o
+		rt*.o
+		exit.o
+		; sys_exit.o
+		anon$$obj.o
+		; *(.ARM.Collect*)
+		*(Veneer$$Code)
+        * (InRoot$$Sections)               ; All library sections that must be in a root region    
+	}
+
+    ; ER_APP 0x00401000 0x00000010
+    ; {
+    ;     * (.app_vector_table, +First)
+    ; }
+
+    DATA_UNINIT 0x00400100 UNINIT 0x01F00
     {
-        * (.app_vector_table, +First) ; Place vector table first
+        *_utils.o (FLAGS)
+        *_utils.o (VARS)
+    }
+
+    DATA 0x00402000 0x10000
+    {
+        * (+RW,+ZI)
+    }
+
+    HEAP 0x00412000 0x00010000
+    {
+        *_stackheap.o (heap)
+    }
+
+    ATCM_C00 0x01000000 0x00008000
+    {
+        *_vectors.o (EL1_VECTORS, +First)         	; EL1 Vector tables and reset handlers
+		;v8rgicv3cpuif.o (v8rgicv3cpuif_c00)	; Core 0 specific routines of GICv3 CPU i/f driver
+		;GIC.o
+		;generictimer.o
+       *_stackheap.o (stack0)
+    }
+
+    ATCM_C00_APP 0x01008000 0x10000
+    {
+		*_v8rgicv3cpuif.o (v8rgicv3cpuif_c00)	; Core 0 specific routines of GICv3 CPU i/f driver
+		*_GIC.o
+		*_generictimer.o  
+    }
+
+    BTCM_C00 0x02000000 NOCOMPRESS 0x00020000
+    {
+        *_GICIsrVectorTable.o (APP_GICIsrVectorTable, +First)
+    }
+
+    CTCM_C00 0x03000000 NOCOMPRESS 0x00020000
+    {
+        * (c00_main, +First)
+        * (c00_app)
         .ANY (+RO)
-    }
-
-    SHARED_RW   0x00400100 UNINIT 0x0F00
-    {
-        * (BOOT_ARGS)
-        * (FLAGS)
-        * (VARS)
-    }
-
-    RW_APP   0x30010000 0x00008000
-    {
-        .ANY (+RW,+ZI)
-        * (APP_GICIsrVectorTable)
-    }
-
-    ARM_LIB_HEAP 0x20010000 EMPTY 0x00004000 ; 16KB Heap
-    {
-    }
-
-    ARM_LIB_STACK 0x20018000 EMPTY -0x00004000 ; 16KB Stack
-    {
-    }
-
-    ; TCM regions (EMPTY so linker defines symbols)
-    ATCM 0x01000000 EMPTY 0x00020000
-    {
-    }
-    BTCM 0x02000000 EMPTY 0x00020000
-    {
-    }
-    CTCM 0x03000000 EMPTY 0x00020000
-    {
     }
 }
