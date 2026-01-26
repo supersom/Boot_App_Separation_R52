@@ -73,14 +73,14 @@ LOAD 0x0
 		*_utils.o (VARS)
 	}
 
-    DATA 0x00402000 0x08000
+    DATA 0x00402000 0x10000
     {
     	* (+RW,+ZI)                         ; All RW and ZI Data            
     }
 	
-	HEAP 0x00410000 0x10000
+	HEAP 0x00412000 0x10000
 	{
-		; *_stackheap.o (heap)		
+		*_stackheap.o (heap)		
 	}
 	;--------------------------------------------
 	; TCMs for cluster 0, core 0 (C00) 
