@@ -41,6 +41,21 @@ __heap_limit_com:
 //-------------------------------------------------------------------------------
 // Stack area
 //-------------------------------------------------------------------------------
+// Stack area - parametrized for each core
+                .section stack, "aw", %nobits
+                .balign STACK_HEAP_ALIGN
+
+                .global  APP_STACK_BASE
+                .global  APP_STACK_TOP
+
+APP_STACK_BASE:
+                .space  (CORE_STACK_SIZE)
+APP_STACK_TOP:
+
+                .global  __initial_sp
+                .set     __initial_sp, APP_STACK_TOP
+
+.if 0
 // Stack C00 area
                 .section stack0, "aw", %nobits
                 .balign STACK_HEAP_ALIGN
@@ -105,3 +120,4 @@ __initial_sp_c11:
 //                .space  TLS_SIZE
 //
 //                .end
+.endif

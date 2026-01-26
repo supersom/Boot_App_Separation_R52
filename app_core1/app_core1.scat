@@ -56,7 +56,7 @@ LOAD 0x00040000 0x00020000
 		;v8rgicv3cpuif.o (v8rgicv3cpuif_c00)	; Core 1 specific routines of GICv3 CPU i/f driver
 		;GIC.o
 		;generictimer.o
-       *_stackheap.o (stack1)
+       *_stackheap.o (stack)
     }
 
     ATCM_C01_APP 0x05008000 0x10000

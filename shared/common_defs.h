@@ -161,12 +161,16 @@
 #endif
 
 #if APP_CORE_ID == CPU_ID_00
+#define APP_STACK_BASE __stack_base_c00
 #define APP_STACK_TOP __stack_top_c00
 #elif APP_CORE_ID == CPU_ID_01
+#define APP_STACK_BASE __stack_base_c01
 #define APP_STACK_TOP __stack_top_c01
 #elif APP_CORE_ID == CPU_ID_10
+#define APP_STACK_BASE __stack_base_c10
 #define APP_STACK_TOP __stack_top_c10
 #elif APP_CORE_ID == CPU_ID_11
+#define APP_STACK_BASE __stack_base_c11
 #define APP_STACK_TOP __stack_top_c11
 #endif
 

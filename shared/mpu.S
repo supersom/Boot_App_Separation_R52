@@ -343,30 +343,43 @@ EL2_MPU_Setup:
 #endif //TCM
 
         // Region 7 - Stack of core 0
-        LDR     r1, =__stack_base_c00
+        LDR     r1, =APP_STACK_BASE
         LDR     r2, =((Non_Shareable<<3) | (RW_Access<<1))
         ORR     r1, r1, r2
         MCR     p15, 0, r1, c6, c11, 4                   // write PRBAR7
 
-        LDR     r1, =__stack_top_c00
+        LDR     r1, =APP_STACK_TOP
         SUB     r1, r1, #1
         BFC     r1, #0, #6
         LDR     r2, =((AttrIndx0<<1) | (ENable))
         ORR     r1, r1, r2
         MCR     p15, 0, r1, c6, c11, 5                   // write PRLAR7
 
-        // Region 8 - Stack of core 1
-        LDR     r1, =__stack_base_c01 //=Image$$ARM_LIB_HEAP$$Base
-        LDR     r2, =((Non_Shareable<<3) | (RW_Access<<1))
-        ORR     r1, r1, r2
-        MCR     p15, 0, r1, c6, c12, 0                   // write PRBAR8
-
-        LDR     r1, =__stack_top_c01 //=Image$$ARM_LIB_STACK$$ZI$$Limit
-        SUB     r1, r1, #1
-        BFC     r1, #0, #6
-        LDR     r2, =((AttrIndx0<<1) | (ENable))
-        ORR     r1, r1, r2
-        MCR     p15, 0, r1, c6, c12, 1                   // write PRLAR8
+@        // Region 7 - Stack of core 0
+@        LDR     r1, =__stack_base_c00
+@        LDR     r2, =((Non_Shareable<<3) | (RW_Access<<1))
+@        ORR     r1, r1, r2
+@        MCR     p15, 0, r1, c6, c11, 4                   // write PRBAR7
+@
+@        LDR     r1, =__stack_top_c00
+@        SUB     r1, r1, #1
+@        BFC     r1, #0, #6
+@        LDR     r2, =((AttrIndx0<<1) | (ENable))
+@        ORR     r1, r1, r2
+@        MCR     p15, 0, r1, c6, c11, 5                   // write PRLAR7
+@
+@        // Region 8 - Stack of core 1
+@        LDR     r1, =__stack_base_c01 //=Image$$ARM_LIB_HEAP$$Base
+@        LDR     r2, =((Non_Shareable<<3) | (RW_Access<<1))
+@        ORR     r1, r1, r2
+@        MCR     p15, 0, r1, c6, c12, 0                   // write PRBAR8
+@
+@        LDR     r1, =__stack_top_c01 //=Image$$ARM_LIB_STACK$$ZI$$Limit
+@        SUB     r1, r1, #1
+@        BFC     r1, #0, #6
+@        LDR     r2, =((AttrIndx0<<1) | (ENable))
+@        ORR     r1, r1, r2
+@        MCR     p15, 0, r1, c6, c12, 1                   // write PRLAR8
 
     // HMAIR0 configuration
         MRC p15, 4, r0, c10, c2, 0      // Read HMAIR0 into r0
