@@ -28,9 +28,11 @@ if [[ -e "$counts_file" ]]; then
   counts_file=$(mktemp "/tmp/$(basename "$log_file").counts.XXXXXX")
 fi
 
-# Build counts after stripping optional HH:MM:SS: prefix
-awk '{ line=$0; sub(/^[0-9]{2}:[0-9]{2}:[0-9]{2}:[[:space:]]*/, "", line); cnt[line]++ } END { for (l in cnt) printf "%d\t%s\n", cnt[l], l }' "$log_file" \
-  | sort -nr > "$counts_file"
+# Build counts after stripping optional HH:MM:SS: prefix.
+# Stable tie-break: preserve first appearance order for lines with equal count.
+awk 'BEGIN{seq=0} { line=$0; sub(/^[0-9]{2}:[0-9]{2}:[0-9]{2}:[[:space:]]*/, "", line); if (!(line in first)) { seq++; first[line]=seq } cnt[line]++ } END { for (l in cnt) printf "%d\t%06d\t%s\n", cnt[l], first[l], l }' "$log_file" \
+  | sort -k1,1nr -k2,2n \
+  | cut -f1,3 > "$counts_file"
 
 declare -A expected
 expected["C00: Entered FIQ handler for SPI (35) triggered by DualTimer1"]=0
