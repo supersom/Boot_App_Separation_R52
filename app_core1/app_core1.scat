@@ -34,7 +34,8 @@ LOAD 0x00040000 0x00020000
     ;     * (.app_vector_table, +First)
     ; }
 
-    DATA_UNINIT 0x00400100 UNINIT 0x01F00
+    ;DATA_UNINIT 0x00400100 UNINIT 0x01F00
+    DATA_UNINIT 0x00400000 UNINIT 0x02000
     {
         *_utils.o (FLAGS)
         *_utils.o (VARS)

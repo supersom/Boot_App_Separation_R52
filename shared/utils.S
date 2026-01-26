@@ -103,7 +103,9 @@ pmccntr_c11_diff_val:
 // Flag variables - to be placed in RW memory shared across cores
 //=================================================================================
 
-.if 0
+.if 1
+
+	.section FLAGS, "aw"
 // Flag tracking whether a core is waiting.
 .balign 8
 Core_waiting:
@@ -119,7 +121,8 @@ Core_initialized:
     .word 0
     .word 0
     .word 0
-.endif
+
+.else
 
 // Flag tracking whether Core_waiting has been initialized.
 // Defined as an absolute symbol to bypass C runtime initialization entirely.
@@ -134,6 +137,9 @@ Core_initialized:
 .equ Core_initialized, 0x00400018
 
 	.section FLAGS, "aw"
+
+.endif
+
 // Flag tracking whether the standard C library has been initialized.
 .balign 8
 C_library_initialized:
@@ -203,13 +209,24 @@ CTCM_initialized:
 	.word 0
 
 // Flag tracking whether the GICD has been initialized.
+.if 1
+
+.balign 8
+GICD_initialized:
+    .word 0
+
+.else
+
 // Defined as an absolute symbol to bypass C runtime initialization entirely.
 // Located at 0x00400004 (inside SHARED_UNINIT region, after 4-byte BOOT_ARGS).
 .global GICD_initialized
 .equ GICD_initialized, 0x00400004
 
-// lock variable controlling access to print resource
 .section FLAGS, "aw"
+
+.endif
+
+// lock variable controlling access to print resource
 .balign 8
 printf_lock:
     .word 0
