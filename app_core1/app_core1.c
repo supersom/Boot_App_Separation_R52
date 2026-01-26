@@ -208,9 +208,13 @@ void virtualTimerIRQhandler(void)
 __attribute__((section("c01_app"), used))
 void SGI1IRQhandler(void)
 {
+__attribute__((section("c01_app_data"), used))
     static uint32_t Seconds;
+__attribute__((section("c01_app_data"), used))
     static uint32_t Minutes;
+__attribute__((section("c01_app_data"), used))
     static uint32_t Hours;
+__attribute__((section("c01_app_data"), used))
     static uint32_t ms = 1;
 
     if (ms == 1000)
