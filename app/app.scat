@@ -67,14 +67,14 @@ LOAD 0x00020000 0x00020000
 		*_generictimer.o  
     }
 
-    BTCM_C00 0x02000000 NOCOMPRESS 0x00020000
+    BTCM_C00 0x02000000 0x00020000
     {
         *_GICIsrVectorTable.o (APP_GICIsrVectorTable, +First)
         * (c00_app_data)
         *_stackheap.o (stack, +Last)
     }
 
-    CTCM_C00 0x03000000 NOCOMPRESS 0x00020000
+    CTCM_C00 0x03000000 0x00020000
     {
         * (c00_main, +First)
         * (c00_app)
