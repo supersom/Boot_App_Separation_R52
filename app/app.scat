@@ -69,6 +69,7 @@ LOAD 0x00020000 0x00020000
     BTCM_C00 0x02000000 NOCOMPRESS 0x00020000
     {
         *_GICIsrVectorTable.o (APP_GICIsrVectorTable, +First)
+        * (c00_app_data)
     }
 
     CTCM_C00 0x03000000 NOCOMPRESS 0x00020000

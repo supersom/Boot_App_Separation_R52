@@ -36,18 +36,27 @@ extern void GIC_enableDualTimer0Interrupt(void);
 extern void GIC_enableDualTimer1Interrupt(void);
 extern void (*GICIsrVectorTable[1024])(void);
 
+__attribute__((section("c00_app"), used))
 static float calculate(float a, float b);
+__attribute__((section("c00_app"), used))
 static void enableSystemCounter(void);
+__attribute__((section("c00_app"), used))
 static void waitForEnableSystemCounter(void);
+__attribute__((section("c00_app"), used))
 static void waitForEnableSystemCounter(void);
+__attribute__((section("c00_app"), used))
 static void enableDualTimer0(unsigned int period);
+__attribute__((section("c00_app"), used))
 static void enableDualTimer1(unsigned int period);
 
+__attribute__((section("c00_app"), used))
 void SGI1IRQhandler(void);
+__attribute__((section("c00_app"), used))
 void virtualTimerIRQhandler(void);
+__attribute__((section("c00_app"), used))
 void DualTimer0INThandler(void);
+__attribute__((section("c00_app"), used))
 void DualTimer1INThandler(void);
-// void SGI0IRQHandler(void);
 
 __attribute__((section("c00_app"), used))
 // Approximate sleep - highly dependent on CPU clock speed
@@ -182,21 +191,15 @@ void virtualTimerIRQhandler(void)
     sendGroup0SGI(0x01000000 /* ID 1 */, 0x0 /* IRM 0 */, 0x1 /* Target CPU1 */);
 }
 
-// void SGI0IRQHandler(void)
-// {
-//     uint32_t aff0 = 0;
-//     uint32_t aff1 = 0;
-//     uint32_t aff2 = 0;
-//     getAffinity(&aff0, &aff1, &aff2);
-// //    spinlock_printf("SGI0IRQHandler: SGI received on core with affinity: %d.%d.%d!\n\n",
-// //        aff2, aff1, aff0);
-// }
-
 void SGI1IRQhandler(void)
 {
+__attribute__((section("c00_app_data"), used))
     static uint32_t Seconds;
+__attribute__((section("c00_app_data"), used))
     static uint32_t Minutes;
+__attribute__((section("c00_app_data"), used))
     static uint32_t Hours;
+__attribute__((section("c00_app_data"), used))
     static uint32_t ms = 1;
 
     if (ms == 1000)
