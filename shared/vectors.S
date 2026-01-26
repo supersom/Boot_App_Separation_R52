@@ -1,9 +1,17 @@
 #include "common_defs.h"
+    .syntax unified
+    .arm
+#ifdef __THUMB__
+    .thumb
+#endif
+    .eabi_attribute 25,1   // Tag_ABI_align_needed
+    .eabi_attribute 24,1   // Tag_ABI_align_preserved
 
-    ; .section .text.el1_vectors, "ax"
     .section EL1_VECTORS, "ax"
-    .global el1_vector_table
     .align 5
+
+    .global el1_vector_table
+    .type el1_vector_table, %function
 el1_vector_table:
     b el1_vector_reset
     b el1_vector_undef
@@ -15,6 +23,7 @@ el1_vector_table:
     b el1_vector_fiq
 
     .global el1_vector_reset
+    .type el1_vector_reset, %function
 el1_vector_reset:
 //    b el1_vector_reset
     LDR PC, =SSBL_common
@@ -55,6 +64,7 @@ el1_default_handler:
     .extern writeEOI_C00
     .extern GICIsrVectorTable_C00
 
+.type el1_vector_fiq, %function
 el1_vector_fiq:
 .if 0
     push {r0-r3, r12, lr}
@@ -100,6 +110,7 @@ el1_vector_fiq:
     .extern writeAliasedEOI
     .extern GICIsrVectorTable_COM
 
+.type el1_vector_irq, %function
 el1_vector_irq:
 .if 0
     push {r0-r3, r12, lr}
