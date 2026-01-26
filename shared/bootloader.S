@@ -236,18 +236,39 @@ primary_boot:
 @		LDR r0, =pmccntr_start_val
 		BL profile_start_asm
 
+#ifdef TCM
 		//----------------------------------------------------------------
 		// Enable ATCM - if disabled at reset
 		//----------------------------------------------------------------
-#ifdef TCM
+	    //Check which CPU I am
+	    MRC p15, 0, r1, c0, c0, 5   // Read MPIDR into Rt
+	    AND r1, r1, 0xFF
+
 		//TODO: Figure out if this is the TCM type register
 		//TODO: Decode sizes of the TCMs and pass into Enable_TCM
-	    MRC p15, 0, r0, c0, c0, 2       // Read TCM Type Register
-	    // r0 now contains TCM availability
+        MRC p15, 0, r0, c0, c0, 2       // Read TCM Type Register
+        // r0 now contains TCM availability
 
-	    LDR r0, =APP_ATCM_BASE              // Set ATCM base address
+		BL isATCMInitialized
+		CMP r0, 0x1
+		BEQ ATCM_Init_Skip_pri
+
+        LDR r0, =APP_ATCM_BASE             // Set ATCM base address
 		BL Enable_ATCM
 		BL awaitATCMInit
+ATCM_Init_Skip_pri:
+		//----------------------------------------------------------------
+		// Enable BTCM - if disabled at reset
+		//----------------------------------------------------------------
+		BL isBTCMInitialized
+		CMP r0, 0x1
+		BEQ BTCM_Init_Skip_pri
+
+        LDR r0, =APP_BTCM_BASE             // Set BTCM base address
+        BL Enable_BTCM
+		BL awaitBTCMInit
+BTCM_Init_Skip_pri:
+
 #endif		// TCM
 
 		//----------------------------------------------------------------
@@ -297,13 +318,34 @@ secondary_boot:
 		//----------------------------------------------------------------
 		// Enable ATCM - if disabled at reset
 		//----------------------------------------------------------------
+	    //Check which CPU I am
+	    MRC p15, 0, r1, c0, c0, 5   // Read MPIDR into Rt
+	    AND r1, r1, 0xFF
+
 		//TODO: Figure out if this is the TCM type register
 		//TODO: Decode sizes of the TCMs and pass into Enable_TCM
-	    MRC p15, 0, r0, c0, c0, 2       // Read TCM Type Register
-	    // r0 now contains TCM availability
-	    LDR r0, =APP_ATCM_BASE          // Set ATCM base address
+        MRC p15, 0, r0, c0, c0, 2       // Read TCM Type Register
+        // r0 now contains TCM availability
+
+		BL isATCMInitialized
+		CMP r0, 0x1
+		BEQ ATCM_Init_Skip_sec
+
+        LDR r0, =APP_ATCM_BASE             // Set ATCM base address
 		BL Enable_ATCM
 		BL awaitATCMInit
+ATCM_Init_Skip_sec:
+		//----------------------------------------------------------------
+		// Enable BTCM - if disabled at reset
+		//----------------------------------------------------------------
+		BL isBTCMInitialized
+		CMP r0, 0x1
+		BEQ BTCM_Init_Skip_sec
+
+        LDR r0, =APP_BTCM_BASE             // Set BTCM base address
+        BL Enable_BTCM
+		BL awaitBTCMInit
+BTCM_Init_Skip_sec:
 
 		//----------------------------------------------------------------
 		// Setup HYP stack 
@@ -690,6 +732,7 @@ Finished:
         MRC p15, 0, r0, c0, c0, 2       // Read TCM Type Register
         // r0 now contains TCM availability
 
+.if 0 // A/BTCM are already initialized in EL2
 		BL isATCMInitialized
 		CMP r0, 0x1
 		BEQ ATCM_Init_Skip
@@ -706,6 +749,7 @@ ATCM_Init_Skip:
         BL Enable_BTCM
 		BL awaitBTCMInit
 BTCM_Init_Skip:
+.endif
 		BL isCTCMInitialized
 		CMP r0, 0x1
 		BEQ CTCM_Init_Skip
@@ -716,6 +760,7 @@ BTCM_Init_Skip:
 CTCM_Init_Skip:
 #endif
 
+.if 0   // Nothing critical in B/CTCM that cannot wait until __main to be copied from ROM
         LDR     r0, =APP_BTCM_LOAD         // src (ROM)
         LDR     r1, =APP_BTCM_BASE         // dst (TCM)
         LDR     r2, =APP_BTCM_LEN          // total bytes
@@ -725,6 +770,7 @@ CTCM_Init_Skip:
         LDR     r1, =APP_CTCM_BASE         // dst (TCM)
         LDR     r2, =APP_CTCM_LEN          // total bytes
 	BL Copy_ROM_to_TCM
+.endif
 
         BL EL1_MPU_Setup
 

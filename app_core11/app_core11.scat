@@ -56,7 +56,7 @@ LOAD 0x00080000 0x00020000
 		;v8rgicv3cpuif.o (v8rgicv3cpuif_c00)	; Core 3 specific routines of GICv3 CPU i/f driver
 		;GIC.o
 		;generictimer.o
-       *_stackheap.o (stack)
+        ;*_stackheap.o (stack)
     }
 
     ATCM_C11_APP 0x0D008000 0x10000
@@ -69,6 +69,7 @@ LOAD 0x00080000 0x00020000
     BTCM_C11 0x0E000000 NOCOMPRESS 0x00020000
     {
         *_GICIsrVectorTable.o (APP_GICIsrVectorTable, +First)
+        *_stackheap.o (stack, +Last)
     }
 
     CTCM_C11 0x0F000000 NOCOMPRESS 0x00020000
