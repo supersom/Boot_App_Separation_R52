@@ -560,9 +560,11 @@ awaitFlashInit:
     BX      lr
 
 //----------------------------------------------------------------
+//----------------------------------------------------------------
 // Ensure that no functions are called from ATCM init routines
 // - stack will be initialized on ATCM and LR is not saved as
 // stack has not been initialized yet.
+//----------------------------------------------------------------
 //----------------------------------------------------------------
 .global markATCMInitialized
 .type markATCMInitialized, "function"
@@ -636,6 +638,13 @@ awaitATCMInit:
     BNE awaitATCMInit
     BX      lr
 
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+// Ensure that no functions are called from ATCM init routines
+// - stack will be initialized on ATCM and LR is not saved as
+// stack has not been initialized yet.
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 .global markBTCMInitialized
 .type markBTCMInitialized, "function"
 //----------------------------------------------------------------
@@ -646,11 +655,13 @@ awaitATCMInit:
 //		r3: value (0x1) to be set to per-core ATCM initialized flag
 //----------------------------------------------------------------
 markBTCMInitialized:
-	PUSH {lr}
-	BL getCPUID // CPU ID in r0
+@	PUSH {lr}
+@	BL getCPUID // CPU ID in r0
+    MRC p15, 0, r0, c0, c0, 5   // Read MPIDR into R0
+    ANDS r0, r0, 0xFF
     LDR r2, =BTCM_initialized
     ADD r2, r2, r0, LSL #2
-    POP {lr}
+@    POP {lr}
     MOV r3, #0x1
     STR r3, [r2]
     BX lr
@@ -666,11 +677,13 @@ markBTCMInitialized:
 //		r3: read value of per-core BTCM initialized flag
 //----------------------------------------------------------------
 isBTCMInitialized:
-	PUSH {lr}
-	BL getCPUID // CPU ID in r0
+@	PUSH {lr}
+@	BL getCPUID // CPU ID in r0
+    MRC p15, 0, r0, c0, c0, 5   // Read MPIDR into R0
+    ANDS r0, r0, 0xFF
     LDR r2, =BTCM_initialized
     ADD r2, r2, r0, LSL #2
-    POP {lr}
+@    POP {lr}
     LDR r3, [r2]
     CMP r3, #0x1
     BEQ BTCM_ready
@@ -691,11 +704,13 @@ BTCM_ready:
 //		r3: read value of per-core BTCM initialized flag
 //----------------------------------------------------------------
 awaitBTCMInit:
-	PUSH {lr}
-	BL getCPUID // CPU ID in r0
+@	PUSH {lr}
+@	BL getCPUID // CPU ID in r0
+    MRC p15, 0, r0, c0, c0, 5   // Read MPIDR into R0
+    ANDS r0, r0, 0xFF
     LDR r2, =BTCM_initialized
     ADD r2, r2, r0, LSL #2
-    POP {lr}
+@    POP {lr}
     LDR r3, [r2]
     CMP r3, #0x1
     BNE awaitBTCMInit
@@ -711,11 +726,13 @@ awaitBTCMInit:
 //		r3: value (0x1) to be set to per-core CTCM initialized flag
 //----------------------------------------------------------------
 markCTCMInitialized:
-	PUSH {lr}
-	BL getCPUID // CPU ID in r0
+@	PUSH {lr}
+@	BL getCPUID // CPU ID in r0
+    MRC p15, 0, r0, c0, c0, 5   // Read MPIDR into R0
+    ANDS r0, r0, 0xFF
     LDR r2, =CTCM_initialized
     ADD r2, r2, r0, LSL #2
-	POP {lr}
+@	POP {lr}
     MOV r3, #0x1
     STR r3, [r2]
     BX lr
