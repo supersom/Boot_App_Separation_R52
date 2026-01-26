@@ -18,12 +18,12 @@ LOAD 0x00020000 0x00020000
         *_initialization.o
         *_GICv3.o
         *_mpu.o
-		lib*.o                           ; Place lib code execution from rom
+		;lib*.o                           ; Place lib code execution from rom
 		_*.o
-		rt*.o
-		exit.o
+		;rt*.o
+		;exit.o
 		; sys_exit.o
-		anon$$obj.o
+		;anon$$obj.o
 		; *(.ARM.Collect*)
 		*(Veneer$$Code)
         * (InRoot$$Sections)               ; All library sections that must be in a root region    

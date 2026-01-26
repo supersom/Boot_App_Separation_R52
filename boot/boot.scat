@@ -56,10 +56,10 @@ LOAD 0x0
  
 	LIB_CODE +0
 	{
-		lib*.o                           ; Place lib code execution from rom
-		_*.o
-		rt*.o
-		exit.o
+		;lib*.o                           ; Place lib code execution from rom
+		;_*.o
+		;rt*.o
+		;exit.o
 		;sys_exit.o
 		;anon$$obj.o
 		;*(.ARM.Collect$$lib*)
